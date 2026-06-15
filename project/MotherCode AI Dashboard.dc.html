@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MotherCode AI Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet"/>
+  <style>
+    @keyframes pulse-glow {
+      0% { box-shadow: 0 0 10px rgba(255, 223, 0, 0.3), inset 0 0 10px rgba(255, 223, 0, 0.1); }
+      50% { box-shadow: 0 0 25px rgba(255, 223, 0, 0.6), inset 0 0 20px rgba(255, 223, 0, 0.2); }
+      100% { box-shadow: 0 0 10px rgba(255, 223, 0, 0.3), inset 0 0 10px rgba(255, 223, 0, 0.1); }
+    }
+    @keyframes slide-up {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes float-orbit {
+      0% { transform: rotate(0deg) translateX(80px) rotate(0deg); }
+      100% { transform: rotate(360deg) translateX(80px) rotate(-360deg); }
+    }
+    @keyframes data-flow {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 100% 50%; }
+    }
+    @keyframes neon-flicker {
+      0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+      20%, 24%, 55% { opacity: 0.8; }
+    }
+    @keyframes radar-sweep {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @keyframes glow-pulse {
+      0%, 100% { filter: drop-shadow(0 0 8px rgba(255, 223, 0, 0.4)); }
+      50% { filter: drop-shadow(0 0 20px rgba(255, 223, 0, 0.8)); }
+    }
+    @keyframes hud-rotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @keyframes mic-wave {
+      0%, 100% { transform: scaleY(1); }
+      50% { transform: scaleY(1.3); }
+    }
+    @keyframes ring-expand {
+      0% { r: 40px; opacity: 1; }
+      100% { r: 120px; opacity: 0; }
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Courier Prime', monospace;
+      background: #0a0a0a;
+      color: #e0e0e0;
+      overflow: hidden;
+      height: 100vh;
+    }
+    .container {
+      display: flex;
+      height: 100vh;
+      gap: 0;
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+    }
+    /* SIDEBAR */
+    .sidebar {
+      background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1e 100%);
+      border-right: 2px solid rgba(255, 223, 0, 0.3);
+      width: 280px;
+      overflow-y: auto;
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.4s ease;
+      position: relative;
+      z-index: 100;
+    }
+    .sidebar.collapsed {
+      transform: translateX(-280px);
+      width: 0;
+    }
+    .sidebar-header {
+      padding: 20px 15px;
+      border-bottom: 1px solid rgba(255, 223, 0, 0.2);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .sidebar-logo {
+      font-size: 24px;
+      font-weight: bold;
+      color: #ffdf00;
+      text-shadow: 0 0 10px rgba(255, 223, 0, 0.6);
+      font-family: 'Space Mono', monospace;
+    }
+    .nav-item {
+      padding: 12px 15px;
+      margin: 5px 10px;
+      border-left: 3px solid transparent;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #b0b0b0;
+      border-radius: 4px;
+    }
+    .nav-item:hover {
+      background: rgba(255, 223, 0, 0.1);
+      color: #ffdf00;
+      border-left-color: #ffdf00;
+      text-shadow: 0 0 8px rgba(255, 223, 0, 0.4);
+    }
+    .nav-item.active {
+      background: rgba(255, 223, 0, 0.15);
+      color: #ffdf00;
+      border-left-color: #ffdf00;
+      box-shadow: inset 0 0 10px rgba(255, 223, 0, 0.1);
+    }
+    /* MAIN CONTENT */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .header {
+      background: rgba(10, 10, 10, 0.8);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 223, 0, 0.2);
+      padding: 15px 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 70px;
+    }
+    .toggle-btn {
+      background: rgba(255, 223, 0, 0.15);
+      border: 1px solid rgba(255, 223, 0, 0.4);
+      color: #ffdf00;
+      cursor: pointer;
+      width: 40px;
+      height: 40px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      transition: all 0.3s ease;
+      animation: neon-flicker 3s infinite;
+    }
+    .toggle-btn:hover {
+      background: rgba(255, 223, 0, 0.25);
+      box-shadow: 0 0 15px rgba(255, 223, 0, 0.5);
+    }
+    .header-title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #ffdf00;
+      text-shadow: 0 0 10px rgba(255, 223, 0, 0.5);
+      font-family: 'Space Mono', monospace;
+    }
+    .header-stats {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      animation: glow-pulse 2s ease-in-out infinite;
+    }
+    .stat-badge {
+      background: rgba(255, 223, 0, 0.1);
+      border: 1px solid rgba(255, 223, 0, 0.3);
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #ffdf00;
+    }
+    /* DASHBOARD GRID */
+    .dashboard {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-rows: auto auto auto 1fr;
+      gap: 15px;
+      padding: 20px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+    }
+    .dashboard::-webkit-scrollbar {
+      width: 8px;
+    }
+    .dashboard::-webkit-scrollbar-track {
+      background: rgba(255, 223, 0, 0.05);
+    }
+    .dashboard::-webkit-scrollbar-thumb {
+      background: rgba(255, 223, 0, 0.3);
+      border-radius: 4px;
+    }
+    .dashboard::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 223, 0, 0.5);
+    }
+    .card {
+      background: linear-gradient(135deg, rgba(26, 26, 46, 0.8) 0%, rgba(15, 15, 30, 0.9) 100%);
+      border: 1px solid rgba(255, 223, 0, 0.2);
+      border-radius: 8px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      animation: slide-up 0.5s ease forwards;
+      transition: all 0.3s ease;
+    }
+    .card:hover {
+      border-color: rgba(255, 223, 0, 0.5);
+      box-shadow: 0 0 20px rgba(255, 223, 0, 0.3);
+      transform: translateY(-2px);
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 223, 0, 0.1), transparent);
+      animation: data-flow 3s infinite;
+    }
+    .card-title {
+      font-size: 14px;
+      color: #ffdf00;
+      margin-bottom: 10px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      position: relative;
+      z-index: 1;
+    }
+    .card-content {
+      position: relative;
+      z-index: 1;
+    }
+    .metric-value {
+      font-size: 32px;
+      font-weight: bold;
+      color: #ffdf00;
+      text-shadow: 0 0 15px rgba(255, 223, 0, 0.6);
+      margin: 10px 0;
+    }
+    .metric-label {
+      font-size: 11px;
+      color: #808080;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .metric-change {
+      font-size: 12px;
+      color: #4ade80;
+      margin-top: 5px;
+    }
+    /* AGENT STATUS */
+    .agent-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      padding: 0;
+    }
+    .agent-card {
+      background: rgba(255, 223, 0, 0.05);
+      border: 1px solid rgba(255, 223, 0, 0.2);
+      padding: 12px;
+      border-radius: 6px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .agent-card:hover {
+      background: rgba(255, 223, 0, 0.1);
+      border-color: rgba(255, 223, 0, 0.5);
+      box-shadow: 0 0 12px rgba(255, 223, 0, 0.3);
+    }
+    .agent-name {
+      font-size: 12px;
+      color: #ffdf00;
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin: 0 auto 5px;
+      animation: pulse-glow 2s ease-in-out infinite;
+    }
+    .status-indicator.active {
+      background: #4ade80;
+      box-shadow: 0 0 8px #4ade80;
+    }
+    .status-indicator.inactive {
+      background: #ef4444;
+      box-shadow: 0 0 8px #ef4444;
+    }
+    .status-text {
+      font-size: 10px;
+      color: #b0b0b0;
+    }
+    /* CONTROL BUTTONS */
+    .button-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 0;
+    }
+    .btn {
+      background: rgba(255, 223, 0, 0.1);
+      border: 1px solid rgba(255, 223, 0, 0.4);
+      color: #ffdf00;
+      padding: 8px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      font-family: 'Courier Prime', monospace;
+      transition: all 0.3s ease;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .btn:hover {
+      background: rgba(255, 223, 0, 0.2);
+      box-shadow: 0 0 12px rgba(255, 223, 0, 0.4);
+      transform: scale(1.05);
+    }
+    .btn:active {
+      transform: scale(0.95);
+    }
+    .btn.danger {
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #ef4444;
+    }
+    .btn.danger:hover {
+      background: rgba(239, 68, 68, 0.1);
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+    }
+    /* CHARTS */
+    .chart-container {
+      height: 200px;
+      position: relative;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 6px;
+      padding: 10px;
+      border: 1px solid rgba(255, 223, 0, 0.1);
+    }
+    .bar-chart {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      height: 100%;
+      gap: 5px;
+    }
+    .bar {
+      flex: 1;
+      background: linear-gradient(180deg, #ffdf00, rgba(255, 223, 0, 0.3));
+      border-radius: 4px 4px 0 0;
+      min-height: 10px;
+      box-shadow: 0 0 10px rgba(255, 223, 0, 0.4);
+      transition: all 0.3s ease;
+      animation: slide-up 0.6s ease forwards;
+    }
+    .bar:hover {
+      box-shadow: 0 0 20px rgba(255, 223, 0, 0.6);
+    }
+    /* RESPONSIVE */
+    @media (max-width: 1200px) {
+      .dashboard {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      }
+    }
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+      .sidebar {
+        position: absolute;
+        left: 0;
+        top: 70px;
+        height: calc(100vh - 70px);
+        width: 260px;
+        z-index: 99;
+        box-shadow: 2px 0 20px rgba(255, 223, 0, 0.2);
+      }
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+      .header {
+        justify-content: space-between;
+      }
+      .header-stats {
+        flex-direction: row;
+        gap: 8px;
+        font-size: 11px;
+      }
+      .metric-value {
+        font-size: 24px;
+      }
+      .card {
+        padding: 15px;
+      }
+    }
+    .voice-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .voice-hud {
+      position: relative;
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 223, 0, 0.1), rgba(0, 0, 0, 0.8));
+      border: 2px solid rgba(255, 223, 0, 0.4);
+      box-shadow: 0 0 30px rgba(255, 223, 0, 0.3), inset 0 0 30px rgba(255, 223, 0, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .hud-inner {
+      position: relative;
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      border: 1px dashed rgba(255, 223, 0, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .hud-center {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 223, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle, rgba(255, 223, 0, 0.05), transparent);
+    }
+    .hud-core {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 2px solid #ffdf00;
+      background: radial-gradient(circle, rgba(255, 223, 0, 0.2), rgba(0, 0, 0, 0.5));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px rgba(255, 223, 0, 0.5), inset 0 0 15px rgba(255, 223, 0, 0.1);
+    }
+    .mic-icon {
+      font-size: 48px;
+      animation: mic-wave 0.6s ease-in-out infinite;
+    }
+    .hud-label {
+      position: absolute;
+      color: #ffdf00;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      opacity: 0.8;
+    }
+    .hud-label-top {
+      top: -45px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .hud-label-bottom {
+      bottom: -45px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      font-size: 10px;
+    }
+    .hud-status {
+      position: absolute;
+      right: -140px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      color: #ffdf00;
+      font-family: 'Courier New', monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      opacity: 0.7;
+    }
+    .status-indicator-small {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #4ade80;
+      box-shadow: 0 0 8px #4ade80;
+    }
+    .voice-controls {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      z-index: 10;
+    }
+    .hud-btn {
+      padding: 8px 16px;
+      border: 1px solid rgba(255, 223, 0, 0.5);
+      background: rgba(0, 0, 0, 0.6);
+      color: #ffdf00;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: all 0.3s ease;
+    }
+    .hud-btn:hover {
+      background: rgba(255, 223, 0, 0.1);
+      box-shadow: 0 0 15px rgba(255, 223, 0, 0.4);
+      border-color: #ffdf00;
+    }
+    .hud-btn.recording {
+      background: rgba(255, 0, 0, 0.2);
+      border-color: #ff4444;
+      color: #ff4444;
+    }
+    @media (max-width: 768px) {
+      .voice-hud {
+        width: 300px;
+        height: 300px;
+      }
+      .hud-inner {
+        width: 240px;
+        height: 240px;
+      }
+      .hud-center {
+        width: 150px;
+        height: 150px;
+      }
+      .hud-core {
+        width: 90px;
+        height: 90px;
+      }
+      .hud-status {
+        right: -100px;
+        font-size: 9px;
+      }
+    }
+    @media (max-width: 480px) {
+      .header-title {
+        font-size: 16px;
+      }
+      .sidebar-logo {
+        font-size: 18px;
+      }
+      .metric-value {
+        font-size: 20px;
+      }
+      .card-title {
+        font-size: 12px;
+      }
+      .button-group {
+        flex-direction: column;
+      }
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</helmet>
+
+<div class="container">
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">⚡ MC</div>
+      <div style="font-size: 12px; color: #808080;">MotherCode</div>
+    </div>
+    <div style="padding: 15px; border-bottom: 1px solid rgba(255, 223, 0, 0.1);">
+      <div style="font-size: 10px; color: #ffdf00; font-weight: bold; margin-bottom: 8px; text-transform: uppercase;">Navigation</div>
+      <div class="nav-item active" onclick="switchView('dashboard')">📊 Dashboard</div>
+      <div class="nav-item" onclick="switchView('agents')">🤖 Subagents</div>
+      <div class="nav-item" onclick="switchView('schedule')">📅 Schedule</div>
+      <div class="nav-item" onclick="switchView('analytics')">📈 Analytics</div>
+      <div class="nav-item" onclick="switchView('slack')">💬 Slack</div>
+      <div class="nav-item" onclick="switchView('buffer')">🔗 Buffer</div>
+      <div class="nav-item" onclick="switchView('sheets')">📋 Google Sheets</div>
+    </div>
+    <div style="padding: 15px; border-bottom: 1px solid rgba(255, 223, 0, 0.1);">
+      <div style="font-size: 10px; color: #ffdf00; font-weight: bold; margin-bottom: 8px; text-transform: uppercase;">System</div>
+      <div class="nav-item" onclick="switchView('settings')">⚙️ Settings</div>
+      <div class="nav-item" onclick="switchView('logs')">📝 System Logs</div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    <!-- HEADER -->
+    <div class="header">
+      <button class="toggle-btn" id="toggleBtn" onclick="toggleSidebar()">☰</button>
+      <div class="header-title">MOTHERCODE AI COMMAND CENTER</div>
+      <div class="header-stats">
+        <div class="stat-badge">ONLINE: {{ onlineAgents }}/{{ totalAgents }}</div>
+        <div class="stat-badge">POSTS QUEUE: {{ queuedPosts }}</div>
+        <div class="stat-badge">API STATUS: {{ apiStatus }}</div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD GRID -->
+    <div class="dashboard">
+      <!-- TOP METRICS ROW -->
+      <div class="card" style="grid-column: span 1;">
+        <div class="card-title">⚡ Active Agents</div>
+        <div class="card-content">
+          <div class="metric-value">{{ onlineAgents }}</div>
+          <div class="metric-label">Of {{ totalAgents }} Total</div>
+          <div class="metric-change">✓ All systems nominal</div>
+        </div>
+      </div>
+
+      <div class="card" style="grid-column: span 1;">
+        <div class="card-title">📤 Posts This Week</div>
+        <div class="card-content">
+          <div class="metric-value">{{ weeklyposts }}</div>
+          <div class="metric-label">Scheduled & Live</div>
+          <div class="metric-change">↑ {{ postGrowth }}% from last week</div>
+        </div>
+      </div>
+
+      <div class="card" style="grid-column: span 1;">
+        <div class="card-title">👁️ Engagement Score</div>
+        <div class="card-content">
+          <div class="metric-value">{{ engagementScore }}</div>
+          <div class="metric-label">Avg Interaction Rate</div>
+          <div class="metric-change">📊 {{ engagementTrend }}% trend</div>
+        </div>
+      </div>
+
+      <div class="card" style="grid-column: span 1;">
+        <div class="card-title">🔄 Next Scheduled</div>
+        <div class="card-content">
+          <div class="metric-value">{{ nextPostTime }}</div>
+          <div class="metric-label">Time to next post</div>
+          <div class="metric-change">{{ nextPostPlatform }}</div>
+        </div>
+      </div>
+
+      <!-- AGENT STATUS CARD -->
+      <div class="card" style="grid-column: span 2; min-height: auto;">
+        <div class="card-title">🤖 SUBAGENT STATUS</div>
+        <div class="card-content">
+          <div class="agent-grid">
+            <sc-for list="{{ agents }}" as="agent" hint-placeholder-count="4">
+              <div class="agent-card">
+                <div class="status-indicator" style="background: {{ agent.statusColor }}; box-shadow: 0 0 8px {{ agent.statusColor }};"></div>
+                <div class="agent-name">{{ agent.name }}</div>
+                <div class="status-text">{{ agent.status }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTROL PANEL -->
+      <div class="card" style="grid-column: span 1;">
+        <div class="card-title">⚙️ QUICK CONTROLS</div>
+        <div class="card-content">
+          <div class="button-group">
+            <button class="btn" onclick="postNow()">📤 POST NOW</button>
+            <button class="btn" onclick="pauseAll()">⏸ PAUSE ALL</button>
+            <button class="btn" onclick="resumeAll()">▶ RESUME</button>
+            <button class="btn danger" onclick="emergencyStop()">⛔ E-STOP</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ENGAGEMENT CHART -->
+      <div class="card" style="grid-column: span 2;">
+        <div class="card-title">📊 ENGAGEMENT TREND (7 DAYS)</div>
+        <div class="card-content">
+          <div class="chart-container">
+            <div class="bar-chart">
+              <sc-for list="{{ engagementData }}" as="item" hint-placeholder-count="7">
+                <div class="bar" style="height: {{ item.height }}%;"></div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- REAL-TIME FEED -->
+      <div class="card" style="grid-column: span 2;">
+        <div class="card-title">📡 REAL-TIME ACTIVITY LOG</div>
+        <div class="card-content">
+          <div style="font-size: 12px; color: #b0b0b0; line-height: 1.8; max-height: 150px; overflow-y: auto;">
+            <sc-for list="{{ activityLog }}" as="log" hint-placeholder-count="5">
+              <div style="margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid rgba(255, 223, 0, 0.1);">
+                <div style="color: #ffdf00; font-size: 11px;">{{ log.time }}</div>
+                <div>{{ log.message }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <!-- BUFFER INTEGRATION -->
+      <div class="card" style="grid-column: span 1;">
+        <div class="card-title">🔗 BUFFER QUEUE</div>
+        <div class="card-content">
+          <div class="metric-value">{{ bufferQueueCount }}</div>
+          <div class="metric-label">Pending Posts</div>
+          <button class="btn" style="width: 100%; margin-top: 10px;" onclick="syncBuffer()">SYNC NOW</button>
+        </div>
+      </div>
+
+      <!-- SLACK STATUS -->
+      <div class="card" style="grid-column: span 1;">
+        <div class="card-title">💬 SLACK CONNECTION</div>
+        <div class="card-content">
+          <div style="display: flex; align-items: center; gap: 10px; margin: 10px 0;">
+            <div class="status-indicator" style="background: #4ade80; box-shadow: 0 0 8px #4ade80; flex-shrink: 0;"></div>
+            <div>
+              <div style="color: #ffdf00; font-weight: bold; font-size: 12px;">Connected</div>
+              <div style="color: #808080; font-size: 10px;">Last sync: {{ lastSlackSync }}</div>
+            </div>
+          </div>
+          <button class="btn" style="width: 100%; margin-top: 10px;" onclick="testSlack()">TEST SLACK</button>
+        </div>
+      </div>
+
+      <!-- GOOGLE SHEETS -->
+      <div class="card" style="grid-column: span 1;">
+        <div class="card-title">📋 GOOGLE SHEETS</div>
+        <div class="card-content">
+          <div class="metric-value">{{ sheetsRowCount }}</div>
+          <div class="metric-label">Content Entries</div>
+          <button class="btn" style="width: 100%; margin-top: 10px;" onclick="syncSheets()">SYNC NOW</button>
+        </div>
+      </div>
+
+      <!-- VOICE CONTROL BUTTON (CORNER) -->
+      <div style="position: fixed; bottom: 30px; right: 30px; z-index: 500;">
+        <button class="btn" style="width: 60px; height: 60px; padding: 0; border-radius: 50%; font-size: 28px; display: flex; align-items: center; justify-content: center;" onClick="{{ toggleVoice }}">🎤</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VOICE HUD MODAL -->
+<sc-if value="{{ voiceActive }}" hint-placeholder-val="{{ false }}">
+  <div class="voice-overlay" onClick="{{ toggleVoice }}">
+    <div class="voice-hud" onClick="{{ (e) => e.stopPropagation() }}">
+      <div class="hud-label hud-label-top">⚡ VOICE CONTROL ⚡</div>
+      
+      <div class="hud-inner">
+        <div class="hud-center">
+          <div class="hud-core">
+            <div class="mic-icon">🎤</div>
+          </div>
+          <svg class="hud-ring" viewBox="0 0 200 200" style="position: absolute; width: 100%; height: 100%;">
+            <circle class="pulse-ring" cx="100" cy="100" r="40" fill="none" stroke="rgba(255, 223, 0, 0.4)" stroke-width="1"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="hud-status">
+        <div style="color: #888;">SLACK AGENTS</div>
+        <div class="status-indicator-small">
+          <div class="status-dot"></div>
+          <span>5 ACTIVE</span>
+        </div>
+        <div style="margin-top: 8px; color: #888;">MODE</div>
+        <div style="color: #ffdf00;">{{ voiceMode }}</div>
+      </div>
+
+      <div class="hud-label hud-label-bottom">
+        {{ voiceTranscript || 'Listening...' }}
+      </div>
+
+      <div class="voice-controls">
+        <button class="hud-btn {{ voiceMode === 'RECORDING' ? 'recording' : '' }}" onClick="{{ toggleRecording }}">
+          {{ voiceMode === 'RECORDING' ? '⏹ Stop' : '🎙 Start' }}
+        </button>
+        <button class="hud-btn" onClick="{{ toggleVoice }}">✕ Close</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<script>
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  sidebar.classList.toggle('collapsed');
+}
+
+function switchView(view) {
+  console.log('Switching to view:', view);
+  document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+function postNow() { alert('📤 Initiating immediate post...'); }
+function pauseAll() { alert('⏸ All agents paused'); }
+function resumeAll() { alert('▶ All agents resumed'); }
+function emergencyStop() { alert('⛔ EMERGENCY STOP ACTIVATED'); }
+function syncBuffer() { alert('🔗 Syncing with Buffer...'); }
+function testSlack() { alert('💬 Testing Slack connection...'); }
+function syncSheets() { alert('📋 Syncing Google Sheets...'); }
+</script>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:&quot;100vh&quot;},&quot;accentColor&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;#00ff88&quot;,&quot;options&quot;:[&quot;#ffdf00&quot;,&quot;#00ff88&quot;,&quot;#00d4ff&quot;,&quot;#ff006e&quot;],&quot;tsType&quot;:&quot;string&quot;},&quot;animationLevel&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;heavy&quot;,&quot;options&quot;:[&quot;minimal&quot;,&quot;moderate&quot;,&quot;heavy&quot;],&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = {
+    sidebarCollapsed: false,
+    currentView: 'dashboard',
+    accentColor: '#ffdf00',
+    darkMode: true,
+    animationLevel: 'heavy',
+    voiceActive: false,
+    voiceMode: 'STANDBY',
+    voiceTranscript: ''
+  };
+
+  componentDidMount() {
+    // Restore tweaks from props
+    if (this.props.accentColor) this.setState({ accentColor: this.props.accentColor });
+    if (this.props.animationLevel) this.setState({ animationLevel: this.props.animationLevel });
+  }
+
+  toggleVoice = () => {
+    this.setState(s => ({ 
+      voiceActive: !s.voiceActive,
+      voiceMode: s.voiceActive ? 'STANDBY' : 'STANDBY',
+      voiceTranscript: ''
+    }));
+  }
+
+  toggleRecording = (e) => {
+    e.stopPropagation();
+    this.setState(s => {
+      const newMode = s.voiceMode === 'RECORDING' ? 'STANDBY' : 'RECORDING';
+      return { 
+        voiceMode: newMode,
+        voiceTranscript: newMode === 'RECORDING' ? 'Listening for commands...' : ''
+      };
+    });
+  }
+
+  renderVals() {
+    // Simulated data - replace with real API calls
+    const now = new Date();
+    const timeFormatter = (h, m) => `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+
+    const agents = [
+      { name: 'TikTok Bot', status: 'Active', statusColor: '#4ade80' },
+      { name: 'Instagram Bot', status: 'Active', statusColor: '#4ade80' },
+      { name: 'YouTube Bot', status: 'Idle', statusColor: '#fbbf24' },
+      { name: 'Twitter Bot', status: 'Active', statusColor: '#4ade80' },
+      { name: 'LinkedIn Bot', status: 'Active', statusColor: '#4ade80' },
+      { name: 'Content Generator', status: 'Processing', statusColor: '#3b82f6' }
+    ];
+
+    const engagementData = [
+      { height: Math.random() * 100 },
+      { height: Math.random() * 100 },
+      { height: Math.random() * 100 },
+      { height: Math.random() * 100 },
+      { height: Math.random() * 100 },
+      { height: Math.random() * 100 },
+      { height: Math.random() * 100 }
+    ];
+
+    const activityLog = [
+      { time: timeFormatter(14, 32), message: '✓ TikTok post published - 2.5K views' },
+      { time: timeFormatter(14, 28), message: '✓ Instagram reels scheduled for 15:00' },
+      { time: timeFormatter(14, 15), message: '⚠ YouTube bot pending approval' },
+      { time: timeFormatter(13, 45), message: '✓ Buffer queue synced - 12 posts queued' },
+      { time: timeFormatter(13, 20), message: '✓ Google Sheets updated - 45 new entries' }
+    ];
+
+    return {
+      onlineAgents: agents.filter(a => a.status === 'Active').length,
+      totalAgents: agents.length,
+      queuedPosts: 23,
+      apiStatus: 'HEALTHY',
+      weeklyposts: 47,
+      postGrowth: 12,
+      engagementScore: '8.7/10',
+      engagementTrend: '+5.3',
+      nextPostTime: '02:15:00',
+      nextPostPlatform: 'Instagram Reels',
+      agents: agents,
+      engagementData: engagementData,
+      activityLog: activityLog,
+      bufferQueueCount: 12,
+      lastSlackSync: '2 min ago',
+      sheetsRowCount: 247,
+      accentColor: this.props.accentColor ?? this.state.accentColor,
+      animationLevel: this.props.animationLevel ?? this.state.animationLevel,
+      voiceActive: this.state.voiceActive,
+      voiceMode: this.state.voiceMode,
+      voiceTranscript: this.state.voiceTranscript,
+      toggleVoice: this.toggleVoice,
+      toggleRecording: this.toggleRecording
+    };
+  }
+}
+
+</script>
+</body>
+</html>
