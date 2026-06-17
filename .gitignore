@@ -1,0 +1,41 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+release/
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment files (keep env.example as the tracked template)
+.env
+.env.production
+.env.local
+
+# Obsidian vault config/cache (not application code)
+.obsidian/
+
+# Secrets — GCP service-account keys & credential files (any depth).
+# The real key is JarvisGCPServiceAccount.json; the generic ignores below
+# don't match it by name, so the wildcard is the actual guard.
+*ServiceAccount*.json
+*serviceaccount*.json
+service_account.json
+credentials.json

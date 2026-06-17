@@ -1,0 +1,75 @@
+{
+  "name": "mothercode-dashboard",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "frontend/main.js",
+  "scripts": {
+    "dev": "vite",
+    "api": "npm --prefix backend run dev",
+    "db:migrate": "npm --prefix backend run migrate",
+    "build": "tsc -b && vite build",
+    "start": "npm --prefix backend start",
+    "start:static": "node serve-dist.mjs",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "electron": "electron .",
+    "electron:dev": "concurrently -k \"npm run dev\" \"wait-on tcp:127.0.0.1:5173 && electron .\"",
+    "electron:build": "npm run build && electron-builder"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "build": {
+    "appId": "com.cdlcgroup.mothercode",
+    "productName": "MotherCode",
+    "files": [
+      "dist/**/*",
+      "frontend/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "frontend/assets/icon.png"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "frontend/assets/icon.png"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "frontend/assets/icon.png"
+    }
+  },
+  "dependencies": {
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "react-is": "^19.2.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.12.3",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.2",
+    "axios": "^1.17.0",
+    "babel-plugin-react-compiler": "^1.0.0",
+    "concurrently": "^9.1.2",
+    "electron": "^33.3.0",
+    "electron-builder": "^25.1.8",
+    "electron-is-dev": "^3.0.1",
+    "eslint": "^10.3.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.6.0",
+    "recharts": "^3.8.1",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.59.2",
+    "vite": "^8.0.16",
+    "wait-on": "^8.0.2",
+    "zustand": "^5.0.14"
+  }
+}

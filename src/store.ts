@@ -1,0 +1,119 @@
+import { create } from 'zustand';
+
+export interface Subagent {
+  id: string;
+  name: string;
+  status: 'active' | 'idle' | 'processing' | 'error';
+  postsProcessed: number;
+  tasksCompleted: number;
+}
+
+export interface VoiceCall {
+  conversationId: string;
+  duration: number;
+  status: 'completed' | 'failed' | 'in_progress' | 'unknown';
+  intent: string;
+  summary: string;
+  timestamp: string;
+}
+
+export interface VoiceMetrics {
+  total: number;
+  completed: number;
+  avgDuration: number;
+  intentCounts: Record<string, number>;
+}
+
+export interface DashboardState {
+  sidebarOpen: boolean;
+  subagents: Subagent[];
+  postsQueued: number;
+  weeklyMetrics: number;
+  engagementScore: number;
+  engagementTrend: number[];
+  bufferQueueCount: number;
+  slackConnected: boolean;
+  googleSheetsSync: boolean;
+  activityLog: { timestamp: string; message: string }[];
+  voiceCalls: VoiceCall[];
+  voiceMetrics: VoiceMetrics;
+  voiceAgentConfigured: boolean;
+  toggleSidebar: () => void;
+  updateSubagentStatus: (id: string, status: Subagent['status']) => void;
+  setPostsQueued: (count: number) => void;
+  setEngagementScore: (score: number) => void;
+  addActivityLog: (message: string) => void;
+  setBufferQueue: (count: number) => void;
+  setSlackConnected: (connected: boolean) => void;
+  setGoogleSheetsSync: (synced: boolean) => void;
+  addVoiceCall: (call: VoiceCall) => void;
+  setVoiceCalls: (calls: VoiceCall[]) => void;
+  setVoiceMetrics: (metrics: VoiceMetrics) => void;
+  setVoiceAgentConfigured: (configured: boolean) => void;
+}
+
+export const useDashboardStore = create<DashboardState>((set) => ({
+  sidebarOpen: true,
+  subagents: [
+    { id: '1', name: 'TikTok Agent', status: 'active', postsProcessed: 342, tasksCompleted: 1205 },
+    { id: '2', name: 'Instagram Agent', status: 'active', postsProcessed: 289, tasksCompleted: 1018 },
+    { id: '3', name: 'YouTube Agent', status: 'processing', postsProcessed: 156, tasksCompleted: 542 },
+    { id: '4', name: 'Twitter Agent', status: 'idle', postsProcessed: 421, tasksCompleted: 1456 },
+    { id: '5', name: 'LinkedIn Agent', status: 'active', postsProcessed: 178, tasksCompleted: 634 },
+    { id: '6', name: 'Buffer Scheduler', status: 'active', postsProcessed: 0, tasksCompleted: 892 },
+  ],
+  postsQueued: 47,
+  weeklyMetrics: 2841,
+  engagementScore: 8.7,
+  engagementTrend: [65, 78, 82, 71, 89, 92, 87],
+  bufferQueueCount: 12,
+  slackConnected: true,
+  googleSheetsSync: true,
+  voiceCalls: [],
+  voiceMetrics: { total: 0, completed: 0, avgDuration: 0, intentCounts: {} },
+  voiceAgentConfigured: false,
+  activityLog: [
+    { timestamp: new Date().toISOString(), message: '✓ Dashboard initialized' },
+    { timestamp: new Date(Date.now() - 60000).toISOString(), message: '✓ Buffer sync completed (12 posts)' },
+    { timestamp: new Date(Date.now() - 120000).toISOString(), message: '✓ TikTok agent posted' },
+    { timestamp: new Date(Date.now() - 180000).toISOString(), message: '✓ Google Sheets synced' },
+  ],
+
+  toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+
+  updateSubagentStatus: (id: string, status: Subagent['status']) =>
+    set((state) => ({
+      subagents: state.subagents.map((agent) =>
+        agent.id === id ? { ...agent, status } : agent
+      ),
+    })),
+
+  setPostsQueued: (count: number) => set({ postsQueued: count }),
+
+  setEngagementScore: (score: number) => set({ engagementScore: score }),
+
+  addActivityLog: (message: string) =>
+    set((state) => ({
+      activityLog: [
+        { timestamp: new Date().toISOString(), message },
+        ...state.activityLog.slice(0, 9),
+      ],
+    })),
+
+  setBufferQueue: (count: number) => set({ bufferQueueCount: count }),
+
+  setSlackConnected: (connected: boolean) => set({ slackConnected: connected }),
+
+  setGoogleSheetsSync: (synced: boolean) => set({ googleSheetsSync: synced }),
+
+  addVoiceCall: (call: VoiceCall) =>
+    set((state) => ({
+      voiceCalls: [call, ...state.voiceCalls].slice(0, 50),
+    })),
+
+  setVoiceCalls: (calls: VoiceCall[]) => set({ voiceCalls: calls }),
+
+  setVoiceMetrics: (metrics: VoiceMetrics) => set({ voiceMetrics: metrics }),
+
+  setVoiceAgentConfigured: (configured: boolean) => set({ voiceAgentConfigured: configured }),
+}));
