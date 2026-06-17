@@ -29,6 +29,11 @@ export const processVoiceCommand = async (req, res, db, motherCode) => {
 
     const result = await motherCode.process(command);
 
+    // BaseAgent.process() wraps execute()'s output:
+    //   { success, agent, data: { response, agents_invoked, results, ... }, executionTime }
+    // so the orchestration payload lives under result.data.
+    const payload = result.data || {};
+
     // Log to database
     await db.query(
       `INSERT INTO voice_commands
@@ -41,8 +46,8 @@ export const processVoiceCommand = async (req, res, db, motherCode) => {
       success: result.success,
       transcript,
       intent,
-      response: result.response,
-      agents_invoked: result.agents_invoked || [],
+      response: payload.response,
+      agents_invoked: payload.agents_invoked || [],
       execution_time_ms: result.executionTime || 0
     });
   } catch (error) {
