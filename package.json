@@ -20,6 +20,30 @@
   "engines": {
     "node": ">=20"
   },
+  "build": {
+    "appId": "com.cdlcgroup.mothercode",
+    "productName": "MotherCode",
+    "files": [
+      "dist/**/*",
+      "frontend/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "frontend/assets/icon.png"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "frontend/assets/icon.png"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "frontend/assets/icon.png"
+    }
+  },
   "dependencies": {
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
