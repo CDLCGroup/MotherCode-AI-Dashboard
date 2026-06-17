@@ -4,6 +4,45 @@ Reverse-chronological log of meaningful work. Newest first.
 
 ---
 
+## 2026-06-17 — Desktop double-clap launcher ("Lefty") working + ElevenLabs hardening
+
+Stood up the project's original **double-clap launcher** — a separate Python app at
+`Downloads\Mother Code\jarvis-main\jarvis-main\jarvis.py` — and made its four actions
+fire reliably. The real ElevenLabs/Deepgram keys are now in use.
+
+### Launcher
+- Reviewed the existing `jarvis.py`: the clap-detection state machine and Win32 window
+  control were already solid. The one real defect was the **welcome silently failing**
+  on a free ElevenLabs key.
+- Rewrote the TTS path to call ElevenLabs over **stdlib `urllib`** (dropped the
+  `elevenlabs` SDK + its ffmpeg dependency) so it can read the exact HTTP status, and
+  added a **402 → free premade voice fallback** (`cjVigY5qzO86Huf0OWal`, "Eric").
+- **Scoped out the Binance** window (`OPEN_BINANCE_BTC_IN_CHROME=False`) — not part of
+  the requested 4-action feature (flag kept for re-enabling).
+- Trimmed `requirements.txt` to what's imported (numpy, sounddevice, python-dotenv);
+  added `.env` (gitignored), `start-lefty.cmd`, and README/`.gitignore` updates.
+
+### Environment fix
+- The machine's system Pythons are **corrupted** — `python` (3.12) is missing
+  `html.entities` and a working pip; `C:\Python314` is missing `enum`/`typing`. Built
+  an isolated **`.venv` from the healthy Python install-manager 3.14.6**
+  (`%LOCALAPPDATA%\Python`) and installed deps there.
+
+### Verification
+- Probed ElevenLabs directly: free tier; configured voice `dOqxOZEisn8SiUH1dPCC` returns
+  **402 `paid_plan_required`** (library voice); free voice "Eric" returns 200 incl. `pcm_24000`.
+- Ran the real paths: mic `InputStream` reads live blocks; configured → 402 → fallback →
+  **200 + audible playback**; `jarvis.py` reaches "Listening" with the right plan and **no
+  Binance line**.
+- Did **not** auto-fire the full chain (it seizes screens/audio and F11s Cursor) — the
+  physical double-clap is the user's test.
+
+### Notes
+- Same paid-voice 402 finding as the dashboard's `voice/tts.js`; both now fall back to a free voice.
+- If Chrome is already open, `--new-window` can land as a tab → Claude opens unpositioned (close Chrome first).
+
+---
+
 ## 2026-06-17 — Phase 3: Multi-view dashboard
 
 **Branch**: `phase-3-dashboard` (off `phase-2-voice-loop`)

@@ -16,6 +16,14 @@ This repo holds three things:
 Current state lives in [`STATUS.md`](STATUS.md). Planning + history live in `docs/`
 (`IMPLEMENTATION_PLAN.md`, `PHASE_1_README.md`, `QUICKSTART.md`, `progress.md`, `decisions.md`).
 
+> **Companion desktop launcher ("Lefty").** The project's original physical entry
+> point is a standalone Python **double-clap launcher**, kept in a separate folder
+> (`Downloads\Mother Code\jarvis-main\jarvis-main\jarvis.py`): a double clap opens
+> Spotify, Claude fullscreen in Chrome on a chosen monitor, an ElevenLabs welcome
+> line, and Cursor fullscreen. It shares the ElevenLabs setup — including the
+> free-tier paid-voice fallback ([`decisions.md`](docs/decisions.md) D-009) — with
+> this repo's backend but ships independently. See that folder's own `README.md`.
+
 ---
 
 ## Quick start

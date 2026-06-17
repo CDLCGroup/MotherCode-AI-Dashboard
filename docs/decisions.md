@@ -4,6 +4,36 @@ Lightweight ADRs. Each records a decision, why, and what it rules out. Newest fi
 
 ---
 
+## 2026-06-17 (Desktop launcher)
+
+### D-011 · Call ElevenLabs over stdlib `urllib`, not the SDK; scope out Binance
+**Decision**: In `jarvis.py`, drop the `elevenlabs` SDK and POST to the REST endpoint with
+`urllib.request`; disable the Binance-window action (`OPEN_BINANCE_BTC_IN_CHROME=False`).
+**Why**: The SDK obscures the HTTP status (needed to detect 402) and pulls in ffmpeg for playback
+we don't use — we only need the raw PCM bytes, which `sounddevice` plays directly. Binance wasn't
+part of the requested 4-action feature.
+**Trade-off**: We hand-build the request/headers; the Binance flag stays in code (flip to re-enable).
+
+### D-010 · Run the launcher from an isolated venv built with the Python install-manager runtime
+**Decision**: Build `.venv` from `%LOCALAPPDATA%\Python\bin\python.exe` (Python install-manager
+3.14.6) and launch via `start-lefty.cmd` / `.venv\Scripts\python.exe`, not the system `python`.
+**Why**: Both system Pythons are corrupted — `python` (3.12) is missing `html.entities` and a working
+pip; `C:\Python314` is missing `enum`/`typing`. The install-manager runtime is the only healthy
+interpreter with a working pip + venv.
+**Alternatives ruled out**: Repairing the system Pythons (slower, may need elevation/reinstall, and the
+corruption scope is unknown); installing into a broken interpreter (can't — pip is dead).
+
+### D-009 · Free-tier 402 on a paid voice auto-falls back to a free premade voice (project-wide)
+**Decision**: When ElevenLabs returns **402 `paid_plan_required`** for the configured voice, retry once
+with a free premade voice (`cjVigY5qzO86Huf0OWal`, "Eric"). Applies to both the desktop launcher
+(`jarvis.py`) and the dashboard backend (`voice/tts.js`).
+**Why**: The user's chosen voice `dOqxOZEisn8SiUH1dPCC` is a library voice that needs a paid plan; on the
+free key it 402s. Silently skipping speech is worse than a slightly different voice — the welcome/reply
+should always be heard. Upgrading the plan makes the chosen voice work with no code change.
+**Trade-off**: On the free tier you hear "Eric", not the chosen voice, until the plan is upgraded.
+
+---
+
 ## 2026-06-17 (Phase 3)
 
 ### D-008 · Keyless fallback extended to tasks and integrations

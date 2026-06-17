@@ -2,7 +2,7 @@
 
 **Last updated**: June 17, 2026
 **Branch**: `phase-3-dashboard`
-**Current phase**: Phase 3 — Multi-view dashboard (functional)
+**Current phase**: Phase 3 dashboard (functional) + desktop double-clap launcher (working)
 
 ---
 
@@ -40,6 +40,16 @@ upgrades**, not requirements.
   - Library: honest Phase-4 placeholder
 - `npm run build` passes (`tsc -b`, no type errors)
 
+### Desktop clap launcher ("Lefty" — standalone Python, `Downloads\Mother Code\jarvis-main\jarvis-main\jarvis.py`)
+The original double-clap entry point, now working end-to-end. A **double clap**
+(~0.1–0.3s apart) into the mic fires four actions in order:
+1. Spotify plays a chosen track (`SONG_URI`)
+2. Claude opens **fullscreen in Chrome** on a chosen monitor (`CLAUDE_CHROME_MONITOR`; Win32 `SetWindowPos`)
+3. ElevenLabs **speaks a welcome line** (`JARVIS_WELCOME_PHRASE`)
+4. Cursor is **focused and sent fullscreen** (F11)
+- TTS **auto-falls back to a free premade voice** when the configured voice needs a paid plan (see Blockers), so the welcome always speaks.
+- Runs from an isolated `.venv` via one-click `start-lefty.cmd`; the Binance window action was scoped out (not part of the 4-action feature).
+
 ---
 
 ## Verified
@@ -47,6 +57,7 @@ upgrades**, not requirements.
 - curl: success (200), validation (400), provider gating (501) ✅
 - WebSocket client: received `connected` + `voice_call` broadcast ✅
 - Rendered live in Chrome (Kapture): no console errors, 6 agents live, **text-command loop** drove CALLS 1→2 ✅
+- **Desktop launcher**: mic `InputStream` reads live audio blocks; configured voice → `402` → **free-voice fallback returns `200` + audible playback**; `jarvis.py` reaches "Listening" with the correct 4-action plan ✅ — the physical double-clap itself is the user's to run (firing it programmatically would seize screens/audio) ⚠️
 
 ## Not yet verified ⚠️
 
@@ -60,13 +71,16 @@ upgrades**, not requirements.
 
 | Item | State | To unblock |
 |------|-------|-----------|
-| Premium STT/TTS | placeholder keys in `backend/.env` | set `DEEPGRAM_API_KEY`, `ELEVENLABS_API_KEY` + `ELEVENLABS_VOICE_ID` |
+| Premium STT/TTS | **real keys now set** (Deepgram + ElevenLabs); active server-side | browser smoke-test still pending |
+| Paid ElevenLabs voice | configured `dOqxOZEisn8SiUH1dPCC` is a **library voice → HTTP 402** on the free tier | upgrade the plan, or accept the auto-fallback to free voice `cjVigY5qzO86Huf0OWal` ("Eric") |
 | Durable history | runs in-memory | start Postgres (`docker-compose up -d`) + `npm run migrate` |
 | Real agents | stubs only | replace each `StubAgent` with a real `BaseAgent` subclass under the same domain key |
 | LLM intent/replies | keyword parser | set `CLAUDE_API_KEY` and wire Claude into `parseIntent` / agent replies |
 
-This machine currently has **no Docker, no psql**, and all paid keys are placeholders —
-hence the keyless-first design.
+This machine has **no Docker, no psql**. Voice keys (ElevenLabs/Deepgram) are now
+real, but on a **free ElevenLabs tier** — paid/library voices 402, so TTS
+auto-falls back to a free voice. The keyless-first design still holds as the
+zero-config default.
 
 ---
 
@@ -84,8 +98,8 @@ npm install && npm run dev                     # http://localhost:5173
 
 ## Next up
 
-- **Voice hardening** (in progress next): live mic smoke-test, wire Deepgram STT + ElevenLabs TTS
-  as active providers, latency tuning
+- **Voice hardening (dashboard)**: keys are set + providers active server-side — remaining is the
+  live browser mic smoke-test (Deepgram STT / ElevenLabs TTS through the UI) and latency tuning
 - Real `CalendarAgent` / `EmailAgent` (Google OAuth) replacing stubs
 - Claude-backed intent parsing + conversational replies
 - Optional hosted ElevenLabs conversational-agent webhook path
