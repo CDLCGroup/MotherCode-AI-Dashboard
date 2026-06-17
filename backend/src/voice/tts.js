@@ -17,6 +17,12 @@ export function ttsConfigured() {
   return realKey(process.env.ELEVENLABS_API_KEY) && realKey(process.env.ELEVENLABS_VOICE_ID);
 }
 
+// Voices known (this process) to require a paid plan. After the first 402 we
+// skip straight to the free fallback instead of re-paying the wasted round-trip
+// on every utterance (~440ms saved per spoken response). Cleared on restart, so
+// upgrading your ElevenLabs plan + restarting restores the configured voice.
+const paidOnlyVoices = new Set();
+
 async function callElevenLabs(voiceId, text) {
   return fetch(`${ELEVENLABS_BASE}/text-to-speech/${voiceId}`, {
     method: 'POST',
@@ -47,16 +53,30 @@ export async function synthesize(text) {
 
   const configuredVoice = process.env.ELEVENLABS_VOICE_ID;
   const fallbackVoice = process.env.ELEVENLABS_FALLBACK_VOICE_ID || FALLBACK_VOICE_ID;
+  const canFallBack = fallbackVoice && fallbackVoice !== configuredVoice;
+
+  // If we already learned the configured voice is paid-only, go straight to the
+  // free voice and skip the guaranteed-402 round-trip.
+  if (canFallBack && paidOnlyVoices.has(configuredVoice)) {
+    const res = await callElevenLabs(fallbackVoice, text);
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '');
+      throw { status: res.status, message: `ElevenLabs error: ${detail.slice(0, 300)}` };
+    }
+    const arrayBuf = await res.arrayBuffer();
+    return { audio: Buffer.from(arrayBuf), contentType: 'audio/mpeg', voiceId: fallbackVoice, fellBack: true };
+  }
 
   let res = await callElevenLabs(configuredVoice, text);
   let fellBack = false;
   let usedVoice = configuredVoice;
 
   // Configured voice needs a paid plan → retry once with a free premade voice.
-  if (res.status === 402 && fallbackVoice && fallbackVoice !== configuredVoice) {
+  if (res.status === 402 && canFallBack) {
+    paidOnlyVoices.add(configuredVoice);
     console.warn(
       `[tts] voice ${configuredVoice} requires a paid ElevenLabs plan (402); falling back to ${fallbackVoice}. ` +
-        `Upgrade your plan or set ELEVENLABS_VOICE_ID to a [premade] voice to silence this.`
+        `Caching this for the process; upgrade your plan or set ELEVENLABS_VOICE_ID to a [premade] voice to silence this.`
     );
     res = await callElevenLabs(fallbackVoice, text);
     fellBack = true;
