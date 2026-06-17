@@ -6,10 +6,10 @@
   "main": "frontend/main.js",
   "scripts": {
     "dev": "vite",
-    "api": "node backend/server.mjs",
-    "db:migrate": "node backend/db/migrate.mjs",
+    "api": "npm --prefix backend run dev",
+    "db:migrate": "npm --prefix backend run migrate",
     "build": "tsc -b && vite build",
-    "start": "node backend/server.mjs",
+    "start": "npm --prefix backend start",
     "start:static": "node serve-dist.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
