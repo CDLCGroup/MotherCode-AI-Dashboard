@@ -40,12 +40,12 @@ upgrades**, not requirements.
   - Library: honest Phase-4 placeholder
 - `npm run build` passes (`tsc -b`, no type errors)
 
-### Desktop clap launcher ("Lefty" — standalone Python, `Downloads\Mother Code\jarvis-main\jarvis-main\jarvis.py`)
+### Desktop clap launcher ("Lefty" — standalone Python, `Downloads\Mother Code\jarvis-main\jarvis-main\Lefty.py`)
 The original double-clap entry point, now working end-to-end. A **double clap**
 (~0.1–0.3s apart) into the mic fires four actions in order:
 1. Spotify plays a chosen track (`SONG_URI`)
 2. Claude opens **fullscreen in Chrome** on a chosen monitor (`CLAUDE_CHROME_MONITOR`; Win32 `SetWindowPos`)
-3. ElevenLabs **speaks a welcome line** (`JARVIS_WELCOME_PHRASE`)
+3. ElevenLabs **speaks a welcome line** (`LEFTY_WELCOME_PHRASE`)
 4. Cursor is **focused and sent fullscreen** (F11)
 - TTS **auto-falls back to a free premade voice** when the configured voice needs a paid plan (see Blockers), so the welcome always speaks.
 - Runs from an isolated `.venv` via one-click `start-lefty.cmd`; the Binance window action was scoped out (not part of the 4-action feature).
@@ -57,7 +57,7 @@ The original double-clap entry point, now working end-to-end. A **double clap**
 - curl: success (200), validation (400), provider gating (501) ✅
 - WebSocket client: received `connected` + `voice_call` broadcast ✅
 - Rendered live in Chrome (Kapture): no console errors, 6 agents live, **text-command loop** drove CALLS 1→2 ✅
-- **Desktop launcher**: mic `InputStream` reads live audio blocks; configured voice → `402` → **free-voice fallback returns `200` + audible playback**; `jarvis.py` reaches "Listening" with the correct 4-action plan ✅ — the physical double-clap itself is the user's to run (firing it programmatically would seize screens/audio) ⚠️
+- **Desktop launcher**: mic `InputStream` reads live audio blocks; configured voice → `402` → **free-voice fallback returns `200` + audible playback**; `Lefty.py` reaches "Listening" with the correct 4-action plan ✅ — the physical double-clap itself is the user's to run (firing it programmatically would seize screens/audio) ⚠️
 
 ## Not yet verified ⚠️
 

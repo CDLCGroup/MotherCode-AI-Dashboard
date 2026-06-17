@@ -18,7 +18,7 @@ Current state lives in [`STATUS.md`](STATUS.md). Planning + history live in `doc
 
 > **Companion desktop launcher ("Lefty").** The project's original physical entry
 > point is a standalone Python **double-clap launcher**, kept in a separate folder
-> (`Downloads\Mother Code\jarvis-main\jarvis-main\jarvis.py`): a double clap opens
+> (`Downloads\Mother Code\jarvis-main\jarvis-main\Lefty.py`): a double clap opens
 > Spotify, Claude fullscreen in Chrome on a chosen monitor, an ElevenLabs welcome
 > line, and Cursor fullscreen. It shares the ElevenLabs setup — including the
 > free-tier paid-voice fallback ([`decisions.md`](docs/decisions.md) D-009) — with

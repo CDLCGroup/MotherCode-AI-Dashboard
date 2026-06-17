@@ -7,11 +7,11 @@ Reverse-chronological log of meaningful work. Newest first.
 ## 2026-06-17 — Desktop double-clap launcher ("Lefty") working + ElevenLabs hardening
 
 Stood up the project's original **double-clap launcher** — a separate Python app at
-`Downloads\Mother Code\jarvis-main\jarvis-main\jarvis.py` — and made its four actions
+`Downloads\Mother Code\jarvis-main\jarvis-main\Lefty.py` — and made its four actions
 fire reliably. The real ElevenLabs/Deepgram keys are now in use.
 
 ### Launcher
-- Reviewed the existing `jarvis.py`: the clap-detection state machine and Win32 window
+- Reviewed the existing `Lefty.py`: the clap-detection state machine and Win32 window
   control were already solid. The one real defect was the **welcome silently failing**
   on a free ElevenLabs key.
 - Rewrote the TTS path to call ElevenLabs over **stdlib `urllib`** (dropped the
@@ -32,7 +32,7 @@ fire reliably. The real ElevenLabs/Deepgram keys are now in use.
 - Probed ElevenLabs directly: free tier; configured voice `dOqxOZEisn8SiUH1dPCC` returns
   **402 `paid_plan_required`** (library voice); free voice "Eric" returns 200 incl. `pcm_24000`.
 - Ran the real paths: mic `InputStream` reads live blocks; configured → 402 → fallback →
-  **200 + audible playback**; `jarvis.py` reaches "Listening" with the right plan and **no
+  **200 + audible playback**; `Lefty.py` reaches "Listening" with the right plan and **no
   Binance line**.
 - Did **not** auto-fire the full chain (it seizes screens/audio and F11s Cursor) — the
   physical double-clap is the user's test.

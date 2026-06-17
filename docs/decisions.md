@@ -7,7 +7,7 @@ Lightweight ADRs. Each records a decision, why, and what it rules out. Newest fi
 ## 2026-06-17 (Desktop launcher)
 
 ### D-011 · Call ElevenLabs over stdlib `urllib`, not the SDK; scope out Binance
-**Decision**: In `jarvis.py`, drop the `elevenlabs` SDK and POST to the REST endpoint with
+**Decision**: In `Lefty.py`, drop the `elevenlabs` SDK and POST to the REST endpoint with
 `urllib.request`; disable the Binance-window action (`OPEN_BINANCE_BTC_IN_CHROME=False`).
 **Why**: The SDK obscures the HTTP status (needed to detect 402) and pulls in ffmpeg for playback
 we don't use — we only need the raw PCM bytes, which `sounddevice` plays directly. Binance wasn't
@@ -26,7 +26,7 @@ corruption scope is unknown); installing into a broken interpreter (can't — pi
 ### D-009 · Free-tier 402 on a paid voice auto-falls back to a free premade voice (project-wide)
 **Decision**: When ElevenLabs returns **402 `paid_plan_required`** for the configured voice, retry once
 with a free premade voice (`cjVigY5qzO86Huf0OWal`, "Eric"). Applies to both the desktop launcher
-(`jarvis.py`) and the dashboard backend (`voice/tts.js`).
+(`Lefty.py`) and the dashboard backend (`voice/tts.js`).
 **Why**: The user's chosen voice `dOqxOZEisn8SiUH1dPCC` is a library voice that needs a paid plan; on the
 free key it 402s. Silently skipping speech is worse than a slightly different voice — the welcome/reply
 should always be heard. Upgrading the plan makes the chosen voice work with no code change.
