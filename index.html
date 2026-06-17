@@ -685,6 +685,160 @@
     .toast.danger { border-color: rgba(239,68,68,0.5); color: #ef4444; }
     .toast.success { border-color: rgba(74,222,128,0.4); color: #4ade80; }
 
+    /* ── COMMAND CHIPS ── */
+    .cmd-chip {
+      background: rgba(255,223,0,0.08);
+      border: 1px solid rgba(255,223,0,0.3);
+      color: #ffdf00;
+      font-size: 10px;
+      padding: 4px 9px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-family: 'Space Mono', monospace;
+      transition: all 0.2s ease;
+    }
+    .cmd-chip:hover { background: rgba(255,223,0,0.18); box-shadow: 0 0 8px rgba(255,223,0,0.3); }
+    .danger-chip { border-color: rgba(239,68,68,0.4); color: #ef4444; }
+    .danger-chip:hover { background: rgba(239,68,68,0.1); box-shadow: 0 0 8px rgba(239,68,68,0.3); }
+
+    /* ── SLACK TERMINAL ── */
+    .slack-layout {
+      display: flex;
+      gap: 16px;
+      height: 320px;
+    }
+    .slack-cmds-list {
+      width: 200px;
+      flex-shrink: 0;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,223,0,0.1);
+      border-radius: 6px;
+      padding: 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .slack-cmds-list::-webkit-scrollbar { width: 3px; }
+    .slack-cmds-list::-webkit-scrollbar-thumb { background: rgba(255,223,0,0.2); border-radius: 2px; }
+    .slack-cmds-label {
+      font-size: 9px;
+      color: #ffdf00;
+      font-weight: bold;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    .slack-cmd-row {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      padding: 7px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+      border-left: 2px solid transparent;
+    }
+    .slack-cmd-row:hover {
+      background: rgba(255,223,0,0.08);
+      border-left-color: #ffdf00;
+    }
+    .danger-row:hover { background: rgba(239,68,68,0.08); border-left-color: #ef4444; }
+    .slack-cmd-name {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: #ffdf00;
+      font-weight: bold;
+    }
+    .danger-row .slack-cmd-name { color: #ef4444; }
+    .slack-cmd-desc { font-size: 9px; color: #808080; }
+
+    .slack-terminal {
+      flex: 1;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,223,0,0.15);
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .slack-terminal-header {
+      padding: 8px 12px;
+      border-bottom: 1px solid rgba(255,223,0,0.1);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+    .slack-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .slack-output {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .slack-output::-webkit-scrollbar { width: 4px; }
+    .slack-output::-webkit-scrollbar-thumb { background: rgba(255,223,0,0.2); border-radius: 2px; }
+    .slack-msg { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+    .slack-ts { font-size: 10px; color: #606060; flex-shrink: 0; }
+    .slack-bot {
+      font-size: 12px;
+      font-weight: bold;
+      color: #ffdf00;
+      flex-shrink: 0;
+      font-family: 'Space Mono', monospace;
+    }
+    .slack-user {
+      font-size: 12px;
+      font-weight: bold;
+      color: #b0b0b0;
+      flex-shrink: 0;
+    }
+    .slack-text { font-size: 12px; color: #d0d0d0; line-height: 1.5; }
+    .slack-cmd-sent { font-size: 12px; color: #ffdf00; font-family: 'Space Mono',monospace; }
+    .slack-response-block {
+      background: rgba(255,223,0,0.05);
+      border-left: 3px solid rgba(255,223,0,0.4);
+      padding: 8px 10px;
+      border-radius: 0 4px 4px 0;
+      font-size: 11px;
+      color: #c0c0c0;
+      line-height: 1.7;
+      width: 100%;
+    }
+    .slack-response-block.danger { border-left-color: rgba(239,68,68,0.6); background: rgba(239,68,68,0.05); }
+    .slack-response-block.success { border-left-color: rgba(74,222,128,0.5); background: rgba(74,222,128,0.04); }
+    .slack-input-row {
+      padding: 10px 12px;
+      border-top: 1px solid rgba(255,223,0,0.1);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .slack-input {
+      flex: 1;
+      background: rgba(255,223,0,0.06);
+      border: 1px solid rgba(255,223,0,0.2);
+      border-radius: 4px;
+      padding: 7px 10px;
+      color: #e0e0e0;
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .slack-input:focus { border-color: rgba(255,223,0,0.5); }
+    .slack-input::placeholder { color: #505050; }
+
+    @media (max-width: 900px) {
+      .slack-layout { flex-direction: column; height: auto; }
+      .slack-cmds-list { width: 100%; flex-direction: row; flex-wrap: wrap; gap: 6px; }
+      .slack-cmd-row { flex-direction: row; align-items: center; gap: 6px; }
+      .slack-terminal { min-height: 240px; }
+    }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 1100px) {
       .span-2, .span-3 { grid-column: span 1; }
@@ -872,6 +1026,12 @@
               <div class="conn-sub" id="slack-sync">Last sync: 2 min ago</div>
             </div>
           </div>
+          <div style="margin:10px 0;display:flex;flex-wrap:wrap;gap:6px;">
+            <div class="cmd-chip" onclick="runSlackCmd('status')">status</div>
+            <div class="cmd-chip" onclick="runSlackCmd('pause all')">pause all</div>
+            <div class="cmd-chip" onclick="runSlackCmd('resume all')">resume all</div>
+            <div class="cmd-chip danger-chip" onclick="runSlackCmd('stop')">e-stop</div>
+          </div>
           <button class="btn full" onclick="testSlack()">TEST SLACK</button>
         </div>
       </div>
@@ -883,6 +1043,81 @@
           <div class="metric-value" id="sheets-count">247</div>
           <div class="metric-label">Content Entries</div>
           <button class="btn full" onclick="syncSheets()">SYNC NOW</button>
+        </div>
+      </div>
+
+      <!-- ── SLACK COMMAND TERMINAL — span 3 ── -->
+      <div class="card span-3" id="slack-terminal-card">
+        <div class="card-title">💬 SLACK COMMAND TERMINAL</div>
+        <div class="card-content">
+          <div class="slack-layout">
+
+            <!-- Command reference sidebar -->
+            <div class="slack-cmds-list">
+              <div class="slack-cmds-label">COMMANDS</div>
+              <div class="slack-cmd-row" onclick="slackInsert('/mc-status')">
+                <span class="slack-cmd-name">/mc-status</span>
+                <span class="slack-cmd-desc">Show all agent statuses</span>
+              </div>
+              <div class="slack-cmd-row" onclick="slackInsert('/mc-post instagram ')">
+                <span class="slack-cmd-name">/mc-post</span>
+                <span class="slack-cmd-desc">&lt;platform&gt; &lt;content&gt;</span>
+              </div>
+              <div class="slack-cmd-row" onclick="slackInsert('/mc-pause all')">
+                <span class="slack-cmd-name">/mc-pause</span>
+                <span class="slack-cmd-desc">[agent|all]</span>
+              </div>
+              <div class="slack-cmd-row" onclick="slackInsert('/mc-resume all')">
+                <span class="slack-cmd-name">/mc-resume</span>
+                <span class="slack-cmd-desc">[agent|all]</span>
+              </div>
+              <div class="slack-cmd-row" onclick="slackInsert('/mc-buffer')">
+                <span class="slack-cmd-name">/mc-buffer</span>
+                <span class="slack-cmd-desc">Show Buffer queue</span>
+              </div>
+              <div class="slack-cmd-row" onclick="slackInsert('/mc-help')">
+                <span class="slack-cmd-name">/mc-help</span>
+                <span class="slack-cmd-desc">Show all commands</span>
+              </div>
+              <div class="slack-cmd-row danger-row" onclick="slackInsert('/mc-stop')">
+                <span class="slack-cmd-name">/mc-stop</span>
+                <span class="slack-cmd-desc">Emergency stop ALL</span>
+              </div>
+              <div style="margin-top:auto;padding-top:12px;border-top:1px solid rgba(255,223,0,0.1);">
+                <div style="font-size:9px;color:#808080;margin-bottom:4px;">AGENT KEYS</div>
+                <div style="font-size:10px;color:#b0b0b0;line-height:1.8;">
+                  tiktok · instagram<br>youtube · twitter<br>linkedin · content
+                </div>
+              </div>
+            </div>
+
+            <!-- Terminal window -->
+            <div class="slack-terminal">
+              <div class="slack-terminal-header">
+                <div class="slack-dot" style="background:#ef4444"></div>
+                <div class="slack-dot" style="background:#fbbf24"></div>
+                <div class="slack-dot" style="background:#4ade80"></div>
+                <span style="margin-left:8px;font-size:11px;color:#808080;font-family:'Space Mono',monospace;"># mothercode-agents</span>
+                <span style="margin-left:auto;font-size:10px;color:#4ade80;">● Socket Mode</span>
+              </div>
+              <div class="slack-output" id="slack-output">
+                <div class="slack-msg">
+                  <span class="slack-ts">09:00</span>
+                  <span class="slack-bot">MotherCode</span>
+                  <span class="slack-text">⚡ MotherCode bot online. Type a command or click one on the left.</span>
+                </div>
+              </div>
+              <div class="slack-input-row">
+                <span style="color:#ffdf00;font-size:14px;margin-right:8px;">›</span>
+                <input class="slack-input" id="slackInput" type="text"
+                  placeholder="Type /mc-status or click a command…"
+                  onkeydown="if(event.key==='Enter') sendSlackCmd()"
+                  autocomplete="off" spellcheck="false"/>
+                <button class="btn" style="padding:6px 14px;white-space:nowrap;" onclick="sendSlackCmd()">SEND ↵</button>
+              </div>
+            </div>
+
+          </div>
         </div>
       </div>
 
@@ -1136,6 +1371,151 @@ function syncSheets() {
     toast('✓ Sheets synced — ' + newRows + ' entries', 'success');
     addLog('✓ Google Sheets updated — ' + newRows + ' entries');
   }, 1800);
+}
+
+// ── SLACK TERMINAL ────────────────────────────────────
+const AGENT_KEYS = ['tiktok','instagram','youtube','twitter','linkedin','content'];
+
+function slackNow() {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+function slackAppend(html) {
+  const out = document.getElementById('slack-output');
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  out.appendChild(div);
+  out.scrollTop = out.scrollHeight;
+}
+
+function slackUserMsg(cmd) {
+  slackAppend(`<div class="slack-msg">
+    <span class="slack-ts">${slackNow()}</span>
+    <span class="slack-user">you</span>
+    <span class="slack-cmd-sent">${cmd}</span>
+  </div>`);
+}
+
+function slackBotMsg(content, type = '') {
+  slackAppend(`<div class="slack-msg">
+    <span class="slack-ts">${slackNow()}</span>
+    <span class="slack-bot">MotherCode</span>
+    <div class="slack-response-block ${type}">${content}</div>
+  </div>`);
+}
+
+function slackInsert(cmd) {
+  const input = document.getElementById('slackInput');
+  input.value = cmd;
+  input.focus();
+  // put cursor at end
+  setTimeout(() => input.setSelectionRange(cmd.length, cmd.length), 0);
+}
+
+function sendSlackCmd() {
+  const input = document.getElementById('slackInput');
+  const raw = input.value.trim();
+  if (!raw) return;
+  input.value = '';
+  slackUserMsg(raw);
+
+  const cmd = raw.toLowerCase().replace(/^\//, '');
+
+  setTimeout(() => {
+    if (cmd === 'mc-status' || cmd === 'status') {
+      const lines = AGENTS.map(a => {
+        const dot = a.status === 'Active' ? '🟢' : a.status === 'Idle' ? '🟡' : '🔴';
+        return `${dot} <strong>${a.name}</strong> — ${a.status.toUpperCase()}`;
+      }).join('<br>');
+      slackBotMsg(`<strong>⚡ Agent Status</strong><br><br>${lines}`, 'success');
+
+    } else if (cmd.startsWith('mc-post ') || cmd.startsWith('post ')) {
+      const parts = raw.replace(/^\/mc-post\s+/i,'').replace(/^post\s+/i,'').split(' ');
+      const platform = parts[0] || 'instagram';
+      const content = parts.slice(1).join(' ') || '(no content)';
+      addLog(`📤 Slack post queued → ${platform}: ${content.slice(0,40)}`);
+      slackBotMsg(`📤 <strong>Post queued</strong> for <strong>${platform.toUpperCase()}</strong><br><em>${content}</em><br><br>✅ Saved to Google Sheets`, 'success');
+
+    } else if (cmd === 'mc-pause all' || cmd === 'pause all') {
+      AGENTS.forEach(a => { if (a.status === 'Active') { a.status = 'Paused'; a.color = '#fbbf24'; }});
+      renderAgents();
+      addLog('⏸ Slack command: all agents paused');
+      slackBotMsg('⏸ <strong>All agents paused.</strong>', '');
+
+    } else if (cmd.startsWith('mc-pause ') || cmd.startsWith('pause ')) {
+      const key = raw.replace(/^\/mc-pause\s+/i,'').replace(/^pause\s+/i,'').trim().toLowerCase();
+      const agent = AGENTS.find(a => a.name.toLowerCase().includes(key));
+      if (agent) {
+        agent.status = 'Paused'; agent.color = '#fbbf24';
+        renderAgents();
+        addLog(`⏸ Slack command: ${agent.name} paused`);
+        slackBotMsg(`⏸ <strong>${agent.name}</strong> paused.`, '');
+      } else {
+        slackBotMsg(`❌ Unknown agent: <code>${key}</code>. Try: tiktok, instagram, youtube, twitter, linkedin, content`, 'danger');
+      }
+
+    } else if (cmd === 'mc-resume all' || cmd === 'resume all') {
+      AGENTS.forEach(a => { if (a.status !== 'Active') { a.status = 'Active'; a.color = '#4ade80'; }});
+      renderAgents();
+      addLog('▶ Slack command: all agents resumed');
+      slackBotMsg('▶ <strong>All agents resumed.</strong>', 'success');
+
+    } else if (cmd.startsWith('mc-resume ') || cmd.startsWith('resume ')) {
+      const key = raw.replace(/^\/mc-resume\s+/i,'').replace(/^resume\s+/i,'').trim().toLowerCase();
+      const agent = AGENTS.find(a => a.name.toLowerCase().includes(key));
+      if (agent) {
+        agent.status = 'Active'; agent.color = '#4ade80';
+        renderAgents();
+        addLog(`▶ Slack command: ${agent.name} resumed`);
+        slackBotMsg(`▶ <strong>${agent.name}</strong> resumed.`, 'success');
+      } else {
+        slackBotMsg(`❌ Unknown agent: <code>${key}</code>`, 'danger');
+      }
+
+    } else if (cmd === 'mc-stop' || cmd === 'stop') {
+      AGENTS.forEach(a => { a.status = 'Stopped'; a.color = '#ef4444'; });
+      renderAgents();
+      addLog('⛔ Slack command: EMERGENCY STOP');
+      toast('⛔ EMERGENCY STOP via Slack', 'danger');
+      slackBotMsg('⛔ <strong>EMERGENCY STOP</strong> — All MotherCode agents halted.', 'danger');
+
+    } else if (cmd === 'mc-buffer' || cmd === 'buffer') {
+      const count = parseInt(document.getElementById('buffer-count').textContent);
+      slackBotMsg(`🔗 <strong>Buffer Queue</strong><br><br>• Pending posts: <strong>${count}</strong><br>• Last sync: just now`, '');
+
+    } else if (cmd === 'mc-help' || cmd === 'help') {
+      slackBotMsg(`<strong>⚡ MotherCode Commands</strong><br><br>
+        <code>/mc-status</code> — Show all agent statuses<br>
+        <code>/mc-post &lt;platform&gt; &lt;content&gt;</code> — Queue a post<br>
+        <code>/mc-pause [agent|all]</code> — Pause agents<br>
+        <code>/mc-resume [agent|all]</code> — Resume agents<br>
+        <code>/mc-stop</code> — Emergency stop all<br>
+        <code>/mc-buffer</code> — Show Buffer queue<br>
+        <code>/mc-help</code> — Show this message<br><br>
+        <em>Agent keys: tiktok · instagram · youtube · twitter · linkedin · content</em>`, '');
+
+    } else {
+      slackBotMsg(`❓ Unknown command: <code>${raw}</code><br>Type <code>/mc-help</code> to see available commands.`, 'danger');
+    }
+  }, 300);
+}
+
+// Quick-chip handler (from Slack Connection card)
+function runSlackCmd(shortCmd) {
+  const map = {
+    'status': '/mc-status',
+    'pause all': '/mc-pause all',
+    'resume all': '/mc-resume all',
+    'stop': '/mc-stop',
+  };
+  const cmd = map[shortCmd] || '/mc-' + shortCmd;
+  // scroll to terminal and insert
+  document.getElementById('slack-terminal-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  setTimeout(() => {
+    slackInsert(cmd);
+    sendSlackCmd();
+  }, 400);
 }
 
 // ── VOICE HUD ─────────────────────────────────────────
