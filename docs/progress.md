@@ -4,6 +4,36 @@ Reverse-chronological log of meaningful work. Newest first.
 
 ---
 
+## 2026-06-17 — Phase 3: Multi-view dashboard
+
+**Branch**: `phase-3-dashboard` (off `phase-2-voice-loop`)
+
+Turned the single voice screen into a navigable multi-view dashboard while keeping
+the voice loop intact, all still keyless.
+
+### Frontend
+- Added `AppShell` with a nav rail (VOICE / HISTORY / SCHEDULE / LIBRARY / SETTINGS)
+  and lifted the theme-variant tabs to be global; `themeVariant` + `activeView` moved
+  into the store so every view shares the accent.
+- Extracted shared theme tokens to `src/theme.ts`; `OrbCanvas` now imports the shared `OrbTheme`.
+- Refactored the voice dashboard to read the shared theme (removed its local tabs/THEMES) — verified unchanged in-browser.
+- New views (all themed via `ViewChrome`):
+  - **History** — searchable, intent-filtered command log from `/api/voice/conversations`.
+  - **Schedule** — task list + create form from `/api/tasks` (keyless via in-memory fallback).
+  - **Settings** — read-only agent/provider/integration status + how-to-enable notes (no credential entry).
+  - **Library** — honest "no content source / Phase 4" placeholder (no mock data).
+
+### Backend
+- `state/taskStore.js` + made `taskRoutes` non-fatal (DB-first, in-memory fallback) so Schedule works keyless.
+- Made `integrationRoutes` non-fatal (returns empty `source: 'memory'` instead of 500) so Settings degrades cleanly.
+
+### Verification
+- `npm run build` clean (`tsc -b`, 32 modules).
+- Kapture walk-through of all 5 views: voice view intact + animating, History/Schedule/Settings show live
+  backend data, Library placeholder, **no console errors**. Keyless task CRUD confirmed via curl.
+
+---
+
 ## 2026-06-17 — Phase 2a: Conversational voice loop (functional)
 
 **Branch**: `phase-2-voice-loop`

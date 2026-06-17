@@ -4,7 +4,27 @@ Lightweight ADRs. Each records a decision, why, and what it rules out. Newest fi
 
 ---
 
-## 2026-06-17
+## 2026-06-17 (Phase 3)
+
+### D-008 · Keyless fallback extended to tasks and integrations
+**Decision**: Mirror the voice store pattern — `taskRoutes` is DB-first with an in-memory
+fallback; `integrationRoutes` returns an empty `source: 'memory'` payload instead of 500.
+**Why**: STATUS.md promises "no infra required". Phase-3 views that 500 without Postgres would
+break that contract and dirty the console. Views must degrade, not crash.
+**Trade-off**: Task data is volatile without a DB; integrations simply show "not tracked" until one exists.
+
+### D-007 · One app shell + nav rail; voice view stays the home view
+**Decision**: Introduce `AppShell` (nav rail + global theme tabs) hosting one active view; move
+`themeVariant`/`activeView` into the store; refactor the voice dashboard to read the shared theme.
+Build views in realness-order; keep Library an honest placeholder rather than mock tiles.
+**Why**: "Incorporate the dashboard" = a navigable product, not parallel dashboards. Sharing theme +
+view state in the store keeps the accent consistent and the shell thin.
+**Alternatives ruled out**: Router library (overkill for 5 views); per-view theme state (would desync the accent);
+fabricated content in Library (same anti-fake discipline as ignoring the Wayta bundle).
+
+---
+
+## 2026-06-17 (Phase 2)
 
 ### D-006 · Add `ws` as a backend dependency
 **Decision**: Use the `ws` package for the WebSocket server, attached to the shared HTTP server.

@@ -1,8 +1,8 @@
 # MotherCode — Project Status
 
 **Last updated**: June 17, 2026
-**Branch**: `phase-2-voice-loop`
-**Current phase**: Phase 2a — Conversational Voice Loop (functional)
+**Branch**: `phase-3-dashboard`
+**Current phase**: Phase 3 — Multi-view dashboard (functional)
 
 ---
 
@@ -33,6 +33,11 @@ upgrades**, not requirements.
 - 3 theme variants (NEON / ACID / EMBER)
 - Live SYSTEM stats, AGENTS list, TASK STREAM, DIAGNOSTICS — all from backend data
 - Mic capture via browser Web Speech API + a text-command fallback
+- **Multi-view shell** (nav rail): VOICE · HISTORY · SCHEDULE · LIBRARY · SETTINGS, shared theme
+  - History: searchable command log (`/api/voice/conversations`)
+  - Schedule: task list + create (`/api/tasks`, keyless in-memory fallback)
+  - Settings: read-only agent/provider/integration status + how-to-enable
+  - Library: honest Phase-4 placeholder
 - `npm run build` passes (`tsc -b`, no type errors)
 
 ---
@@ -77,9 +82,10 @@ npm install && npm run dev                     # http://localhost:5173
 
 ---
 
-## Next up (Phase 2b candidates)
+## Next up
 
-- Live mic smoke-test + latency tuning
-- Real `CalendarAgent` / `EmailAgent` (Google OAuth)
+- **Voice hardening** (in progress next): live mic smoke-test, wire Deepgram STT + ElevenLabs TTS
+  as active providers, latency tuning
+- Real `CalendarAgent` / `EmailAgent` (Google OAuth) replacing stubs
 - Claude-backed intent parsing + conversational replies
 - Optional hosted ElevenLabs conversational-agent webhook path

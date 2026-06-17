@@ -1,8 +1,8 @@
-import OrchestrationDashboard from './components/OrchestrationDashboard';
+import AppShell from './components/AppShell';
 import './index.css';
 
 function App() {
-  return <OrchestrationDashboard />;
+  return <AppShell />;
 }
 
 export default App;

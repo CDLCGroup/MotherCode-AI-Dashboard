@@ -49,6 +49,9 @@ export interface DashboardState {
   voiceRunning: boolean;
   liveTranscript: string;
   liveResponse: string;
+  // Shared UI theme (Glass-Metric variant 1/2/3) + active dashboard view
+  themeVariant: number;
+  activeView: string;
   toggleSidebar: () => void;
   updateSubagentStatus: (id: string, status: Subagent['status']) => void;
   setPostsQueued: (count: number) => void;
@@ -68,6 +71,8 @@ export interface DashboardState {
   toggleVoiceRunning: () => void;
   setLiveTranscript: (text: string) => void;
   setLiveResponse: (text: string) => void;
+  setThemeVariant: (variant: number) => void;
+  setActiveView: (view: string) => void;
 }
 
 export const useDashboardStore = create<DashboardState>((set) => ({
@@ -96,6 +101,8 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   voiceRunning: true,
   liveTranscript: '',
   liveResponse: '',
+  themeVariant: 1,
+  activeView: 'voice',
   activityLog: [
     { timestamp: new Date().toISOString(), message: '✓ Dashboard initialized' },
     { timestamp: new Date(Date.now() - 60000).toISOString(), message: '✓ Buffer sync completed (12 posts)' },
@@ -154,4 +161,8 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   setLiveTranscript: (text: string) => set({ liveTranscript: text }),
 
   setLiveResponse: (text: string) => set({ liveResponse: text }),
+
+  setThemeVariant: (variant: number) => set({ themeVariant: variant }),
+
+  setActiveView: (view: string) => set({ activeView: view }),
 }));

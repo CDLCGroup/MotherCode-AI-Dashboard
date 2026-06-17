@@ -9,15 +9,8 @@ import { useState } from 'react';
 import { useDashboardStore } from '../store';
 import { useVoiceData } from '../voice/useVoiceData';
 import { useVoiceLoop } from '../voice/useVoiceLoop';
-import OrbCanvas, { type OrbTheme } from './OrbCanvas';
-
-const THEMES: Record<number, OrbTheme & { id: number; label: string }> = {
-  1: { id: 1, label: 'A · NEON', accent: '#00ff99', accentRGB: '0,255,153', glow: '#00ccff', glowRGB: '0,204,255' },
-  2: { id: 2, label: 'B · ACID', accent: '#bfff00', accentRGB: '191,255,0', glow: '#ff00ff', glowRGB: '255,0,255' },
-  3: { id: 3, label: 'C · EMBER', accent: '#ff4500', accentRGB: '255,69,0', glow: '#ffd700', glowRGB: '255,215,0' },
-};
-
-const mono = "'Fira Code', ui-monospace, SFMono-Regular, Menlo, monospace";
+import { getTheme, MONO as mono } from '../theme';
+import OrbCanvas from './OrbCanvas';
 
 function fmtTime(ts: string) {
   try {
@@ -31,9 +24,9 @@ export default function OrchestrationDashboard() {
   useVoiceData();
   const { listening, busy, sttSupported, toggleTurn, sendText } = useVoiceLoop();
 
-  const [variant, setVariant] = useState(1);
+  const variant = useDashboardStore((s) => s.themeVariant);
   const [textInput, setTextInput] = useState('');
-  const theme = THEMES[variant];
+  const theme = getTheme(variant);
   const accent = theme.accent;
 
   const voiceUiState = useDashboardStore((s) => s.voiceUiState);
@@ -76,8 +69,8 @@ export default function OrchestrationDashboard() {
     <div
       style={{
         display: 'flex',
-        width: '100vw',
-        height: '100vh',
+        width: '100%',
+        height: '100%',
         background: '#050508',
         fontFamily: 'Inter, system-ui, sans-serif',
         color: '#ccc',
@@ -85,30 +78,6 @@ export default function OrchestrationDashboard() {
         position: 'relative',
       }}
     >
-      {/* VARIANT TABS */}
-      <div style={{ position: 'absolute', top: 14, left: '50%', transform: 'translateX(-50%)', zIndex: 100, display: 'flex', gap: 6 }}>
-        {Object.values(THEMES).map((th) => (
-          <button
-            key={th.id}
-            onClick={() => setVariant(th.id)}
-            style={{
-              padding: '6px 14px',
-              background: variant === th.id ? th.accent : 'rgba(255,255,255,0.05)',
-              color: variant === th.id ? '#000' : '#666',
-              border: `1px solid ${variant === th.id ? th.accent : '#333'}`,
-              borderRadius: 3,
-              fontFamily: mono,
-              fontSize: 10,
-              cursor: 'pointer',
-              letterSpacing: 1,
-              transition: 'all 120ms ease',
-            }}
-          >
-            {th.label}
-          </button>
-        ))}
-      </div>
-
       {/* LEFT SIDEBAR */}
       <div
         style={{

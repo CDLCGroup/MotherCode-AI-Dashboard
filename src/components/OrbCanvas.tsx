@@ -7,13 +7,7 @@
 
 import { useEffect, useRef } from 'react';
 import type { VoiceUiState } from '../store';
-
-export interface OrbTheme {
-  accent: string;
-  accentRGB: string;
-  glow: string;
-  glowRGB: string;
-}
+import type { OrbTheme } from '../theme';
 
 interface AgentDef {
   name: string;
