@@ -13,17 +13,22 @@ This repo holds three things:
 | **Backend API** | `backend/` | Express (ESM), PostgreSQL, Redis — standalone nested npm package |
 | **Design handoff** | `project/` | Original Claude Design mockups (`MotherCode AI Dashboard.dc.html`) + assets |
 
-Planning docs live in `docs/` (`IMPLEMENTATION_PLAN.md`, `PHASE_1_README.md`, `QUICKSTART.md`).
+Current state lives in [`STATUS.md`](STATUS.md). Planning + history live in `docs/`
+(`IMPLEMENTATION_PLAN.md`, `PHASE_1_README.md`, `QUICKSTART.md`, `progress.md`, `decisions.md`).
 
 ---
 
 ## Quick start
 
-### 1. Infrastructure (Postgres + Redis)
+### 1. Infrastructure (optional in Phase 2)
 
 ```bash
 docker-compose up -d        # postgres:15 + redis:7 (+ pgAdmin, redis-commander)
 ```
+
+Phase 2 runs **without** Postgres/Redis: the voice loop keeps recent calls in
+memory and persistence to `voice_commands` is best-effort. Start the DB only
+when you want durable history.
 
 ### 2. Backend API
 
@@ -31,11 +36,10 @@ The backend is a self-contained package under `backend/` with its own deps.
 
 ```bash
 cd backend
-cp .env.example .env        # fill in DB/Redis + API keys
-npm install                 # Phase-1 deps only (no native builds)
-npm run migrate             # apply db/schema.sql
-npm run seed                # optional: default dev user
-npm run dev                 # http://localhost:5000  (node --watch)
+cp .env.example .env        # DB/Redis + API keys are all optional for the voice loop
+npm install                 # no native builds
+npm run migrate             # optional: apply db/schema.sql (needs Postgres)
+npm run dev                 # http://localhost:3001  (HTTP + WebSocket, node --watch)
 ```
 
 Or drive it from the repo root: `npm run api`, `npm run db:migrate`.
@@ -47,6 +51,9 @@ npm install
 npm run dev                 # Vite dev server at http://localhost:5173
 ```
 
+The dashboard talks to the backend at `http://localhost:3001` and `ws://localhost:3001`
+(override with `VITE_API_URL` / `VITE_WS_URL`).
+
 ### 4. Desktop app (Electron)
 
 ```bash
@@ -56,31 +63,41 @@ npm run electron:build      # packaged installer via electron-builder -> release
 
 ---
 
-## API surface (Phase 1)
+## API surface
 
 | Method | Route | Purpose |
 |--------|-------|---------|
 | `GET`  | `/health` | Liveness check → `{ status, timestamp }` |
-| `POST` | `/api/voice/command` | Process a voice command `{ userId, transcript }` |
-| `GET`  | `/api/voice/history` | Recent voice commands for a user |
+| `POST` | `/api/voice/command` | Process a command `{ userId, transcript, durationSec? }` → `{ response, agents_invoked, … }` |
+| `GET`  | `/api/voice/history` | Recent commands for a user (DB, falls back to memory) |
+| `GET`  | `/api/voice/conversations` | Recent calls in the dashboard `VoiceCall` shape |
+| `GET`  | `/api/voice/metrics` | Aggregate `VoiceMetrics` (total/completed/avgDuration/intentCounts) |
+| `GET`  | `/api/voice/agent/status` | Registered agents + configured voice providers |
+| `POST` | `/api/voice/tts` | ElevenLabs TTS `{ text }` → audio (501 until key set) |
+| `POST` | `/api/voice/transcribe` | Deepgram STT (raw audio) → `{ transcript }` (501 until key set) |
+| `WS`   | `ws://localhost:3001` | Real-time push: `{ type: 'voice_call', data }` |
 | `GET`/`POST` | `/api/tasks` | Task list / create |
 | `GET`  | `/api/integrations` | Connected integrations (credentials never returned) |
-
-The Electron shell talks to the backend at `http://localhost:5000` (see
-`frontend/main.js`).
 
 ---
 
 ## Status
 
-**Phase 1** — scaffold + orchestration skeleton. The backend boots and serves
-without external API keys; `MotherCodeAgent` routes intents but specialized
-agents are not yet registered, so commands return a graceful "not able to
-complete" response until Phase 2 wires them up.
+**Phase 2** — conversational voice loop. Speak (or type) a command → MotherCode
+routes it to registered agents → a spoken reply, with the orchestration core
+animating LISTENING / RESPONDING in real time.
 
-Heavy/native dependencies (voice capture, ffmpeg, OS keychain, auth) were
-pruned from `backend/package.json` to keep `npm install` clean — they're
-listed under `_phase2Dependencies` and re-added as features land.
+- **Speech** defaults to the browser's Web Speech API (`SpeechRecognition` +
+  `speechSynthesis`) — **no API keys required**, Chrome/Edge for mic input.
+  Set `DEEPGRAM_API_KEY` / `ELEVENLABS_API_KEY` to upgrade STT/TTS to the
+  server-side providers (same interface, gated until keys are present).
+- **Agents** are registered as stubs (`StubAgent`) so the loop is end-to-end
+  today; swap each for a real `BaseAgent` subclass under the same domain key.
+- **No infra required**: runs without Postgres/Redis; DB persistence is
+  best-effort.
+
+Heavy/native dependencies (ffmpeg, OS keychain, auth) remain pruned from
+`backend/package.json` (`_phase2Dependencies`) and are re-added as features land.
 
 ## License
 

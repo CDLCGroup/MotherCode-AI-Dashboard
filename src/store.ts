@@ -24,6 +24,10 @@ export interface VoiceMetrics {
   intentCounts: Record<string, number>;
 }
 
+// Voice-loop UI states — these drive the Glass-Metric orchestration core's
+// waveform/label (STANDBY / LISTENING / RESPONDING / ERROR).
+export type VoiceUiState = 'IDLE' | 'USER_TALKING' | 'AI_SPEAKING' | 'AGENT_ERROR';
+
 export interface DashboardState {
   sidebarOpen: boolean;
   subagents: Subagent[];
@@ -38,6 +42,13 @@ export interface DashboardState {
   voiceCalls: VoiceCall[];
   voiceMetrics: VoiceMetrics;
   voiceAgentConfigured: boolean;
+  voiceDomains: string[];
+  voiceProviders: { stt: string; tts: string };
+  // Live voice-loop state
+  voiceUiState: VoiceUiState;
+  voiceRunning: boolean;
+  liveTranscript: string;
+  liveResponse: string;
   toggleSidebar: () => void;
   updateSubagentStatus: (id: string, status: Subagent['status']) => void;
   setPostsQueued: (count: number) => void;
@@ -50,6 +61,13 @@ export interface DashboardState {
   setVoiceCalls: (calls: VoiceCall[]) => void;
   setVoiceMetrics: (metrics: VoiceMetrics) => void;
   setVoiceAgentConfigured: (configured: boolean) => void;
+  setVoiceDomains: (domains: string[]) => void;
+  setVoiceProviders: (providers: { stt: string; tts: string }) => void;
+  setVoiceUiState: (state: VoiceUiState) => void;
+  setVoiceRunning: (running: boolean) => void;
+  toggleVoiceRunning: () => void;
+  setLiveTranscript: (text: string) => void;
+  setLiveResponse: (text: string) => void;
 }
 
 export const useDashboardStore = create<DashboardState>((set) => ({
@@ -72,6 +90,12 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   voiceCalls: [],
   voiceMetrics: { total: 0, completed: 0, avgDuration: 0, intentCounts: {} },
   voiceAgentConfigured: false,
+  voiceDomains: [],
+  voiceProviders: { stt: 'browser-speech', tts: 'browser-speech' },
+  voiceUiState: 'IDLE',
+  voiceRunning: true,
+  liveTranscript: '',
+  liveResponse: '',
   activityLog: [
     { timestamp: new Date().toISOString(), message: '✓ Dashboard initialized' },
     { timestamp: new Date(Date.now() - 60000).toISOString(), message: '✓ Buffer sync completed (12 posts)' },
@@ -116,4 +140,18 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   setVoiceMetrics: (metrics: VoiceMetrics) => set({ voiceMetrics: metrics }),
 
   setVoiceAgentConfigured: (configured: boolean) => set({ voiceAgentConfigured: configured }),
+
+  setVoiceDomains: (domains: string[]) => set({ voiceDomains: domains }),
+
+  setVoiceProviders: (providers: { stt: string; tts: string }) => set({ voiceProviders: providers }),
+
+  setVoiceUiState: (state: VoiceUiState) => set({ voiceUiState: state }),
+
+  setVoiceRunning: (running: boolean) => set({ voiceRunning: running }),
+
+  toggleVoiceRunning: () => set((state) => ({ voiceRunning: !state.voiceRunning })),
+
+  setLiveTranscript: (text: string) => set({ liveTranscript: text }),
+
+  setLiveResponse: (text: string) => set({ liveResponse: text }),
 }));

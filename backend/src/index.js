@@ -1,4 +1,5 @@
 // backend/src/index.js
+import http from 'http';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -8,11 +9,13 @@ import voiceRoutes from './api/routes/voiceRoutes.js';
 import taskRoutes from './api/routes/taskRoutes.js';
 import integrationRoutes from './api/routes/integrationRoutes.js';
 import { errorHandler } from './api/middleware/errorHandler.js';
+import { attachWebSocket } from './realtime/wsHub.js';
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+// Phase 2: default to 3001 to match the frontend's VITE_API_URL / VITE_WS_URL.
+const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(helmet());
@@ -39,11 +42,18 @@ app.use((req, res) => {
 // Error handler
 app.use(errorHandler);
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🎙️ Lucky Lefty backend running on http://localhost:${PORT}`);
-  console.log(`   Voice endpoint: POST http://localhost:${PORT}/api/voice/command`);
-  console.log(`   Health check: GET http://localhost:${PORT}/health`);
+// Start server (HTTP + WebSocket share one port so the frontend can use ws://host:PORT)
+const server = http.createServer(app);
+attachWebSocket(server);
+
+server.listen(PORT, () => {
+  console.log(`🎙️  MotherCode backend running on http://localhost:${PORT}`);
+  console.log(`   Voice command:  POST http://localhost:${PORT}/api/voice/command`);
+  console.log(`   Conversations:  GET  http://localhost:${PORT}/api/voice/conversations`);
+  console.log(`   Metrics:        GET  http://localhost:${PORT}/api/voice/metrics`);
+  console.log(`   Agent status:   GET  http://localhost:${PORT}/api/voice/agent/status`);
+  console.log(`   WebSocket:      ws://localhost:${PORT}`);
+  console.log(`   Health check:   GET  http://localhost:${PORT}/health`);
 });
 
 export default app;
