@@ -65,12 +65,25 @@ export default function SettingsView() {
       <Section theme={theme} title="VOICE PROVIDERS">
         <Row theme={theme} label="Speech-to-text" ok value={status?.providers.stt || '—'} accentValue={sttPremium} />
         <Row theme={theme} label="Text-to-speech" ok value={status?.providers.tts || '—'} accentValue={ttsPremium} />
-        <Note>
-          Default is the browser Web Speech API (no keys). To upgrade: set{' '}
-          <code style={codeStyle}>DEEPGRAM_API_KEY</code> for STT and{' '}
-          <code style={codeStyle}>ELEVENLABS_API_KEY</code> + <code style={codeStyle}>ELEVENLABS_VOICE_ID</code> for TTS
-          in <code style={codeStyle}>backend/.env</code>, then restart the backend.
-        </Note>
+        {!sttPremium && !ttsPremium && (
+          <Note>
+            Default is the browser Web Speech API (no keys). To upgrade: set{' '}
+            <code style={codeStyle}>DEEPGRAM_API_KEY</code> for STT and{' '}
+            <code style={codeStyle}>ELEVENLABS_API_KEY</code> + <code style={codeStyle}>ELEVENLABS_VOICE_ID</code> for TTS
+            in <code style={codeStyle}>backend/.env</code>, then restart the backend.
+          </Note>
+        )}
+        {(sttPremium || ttsPremium) && (
+          <Note>
+            Premium providers active{sttPremium ? ' · Deepgram STT' : ''}{ttsPremium ? ' · ElevenLabs TTS' : ''}.
+            {ttsPremium && (
+              <>
+                {' '}Note: <code style={codeStyle}>[professional]</code>/library ElevenLabs voices need a paid plan —
+                if the configured voice is paid-only, TTS auto-falls back to a free premade voice until you upgrade.
+              </>
+            )}
+          </Note>
+        )}
       </Section>
 
       <Section theme={theme} title="INTEGRATIONS">

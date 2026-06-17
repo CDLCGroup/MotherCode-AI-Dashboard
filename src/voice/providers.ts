@@ -1,10 +1,18 @@
 // src/voice/providers.ts
 //
-// Provider abstraction for the voice loop. The default implementation uses the
-// browser's built-in Web Speech API (SpeechRecognition for STT + speechSynthesis
-// for TTS) so the loop works TODAY with zero API keys. The premium ElevenLabs/
-// Deepgram path is wired server-side (POST /api/voice/tts, /api/voice/transcribe)
-// and exposed here behind the same interface — flip to it once keys are present.
+// Provider abstraction for the voice loop. Two concrete providers:
+//   - BrowserSpeechProvider: Web Speech API (SpeechRecognition + speechSynthesis),
+//     the no-key default that runs today.
+//   - ServerSpeechProvider: premium path — MediaRecorder audio -> POST
+//     /api/voice/transcribe (Deepgram STT), and POST /api/voice/tts (ElevenLabs)
+//     -> play the returned audio.
+//
+// `getSpeechProvider(providers)` returns a hybrid that routes EACH capability
+// (STT, TTS) to the server when the backend reports a premium provider for it,
+// and to the browser otherwise — so a Deepgram-only or ElevenLabs-only setup
+// still works, and everything degrades gracefully with no keys.
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export interface ListenHandlers {
   onPartial?: (text: string) => void;
@@ -134,14 +142,200 @@ export class BrowserSpeechProvider implements SpeechProvider {
   }
 }
 
-let _provider: SpeechProvider | null = null;
+/**
+ * Server provider. STT: capture mic with MediaRecorder, POST the recording to
+ * /api/voice/transcribe (Deepgram). TTS: POST text to /api/voice/tts (ElevenLabs)
+ * and play the returned MP3. Falls back via the hybrid wrapper if a call fails.
+ */
+export class ServerSpeechProvider implements SpeechProvider {
+  readonly name = 'server-speech';
+  private recorder: MediaRecorder | null = null;
+  private stream: MediaStream | null = null;
+  private audio: HTMLAudioElement | null = null;
+  private aborted = false;
+
+  get sttSupported(): boolean {
+    return (
+      typeof navigator !== 'undefined' &&
+      !!navigator.mediaDevices?.getUserMedia &&
+      typeof window !== 'undefined' &&
+      'MediaRecorder' in window
+    );
+  }
+  get ttsSupported(): boolean {
+    return typeof window !== 'undefined' && 'Audio' in window;
+  }
+
+  async startListening(handlers: ListenHandlers): Promise<void> {
+    if (!this.sttSupported) {
+      handlers.onError?.('Microphone capture not supported in this browser.');
+      return;
+    }
+    this.aborted = false;
+    try {
+      this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      handlers.onError?.('Microphone permission denied.');
+      return;
+    }
+    const chunks: BlobPart[] = [];
+    const rec = new MediaRecorder(this.stream);
+    this.recorder = rec;
+
+    rec.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) chunks.push(e.data);
+    };
+    rec.onstop = async () => {
+      this.releaseStream();
+      if (this.aborted) {
+        handlers.onEnd?.();
+        return;
+      }
+      const blob = new Blob(chunks, { type: rec.mimeType || 'audio/webm' });
+      if (blob.size === 0) {
+        handlers.onError?.('No audio captured.');
+        handlers.onEnd?.();
+        return;
+      }
+      try {
+        const res = await fetch(`${API_BASE}/api/voice/transcribe`, {
+          method: 'POST',
+          headers: { 'Content-Type': blob.type || 'audio/webm' },
+          body: blob,
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const transcript = (data.transcript || '').trim();
+        if (transcript) handlers.onFinal(transcript);
+        else handlers.onError?.('No speech detected.');
+      } catch (err) {
+        handlers.onError?.(`STT failed: ${String(err)}`);
+      } finally {
+        handlers.onEnd?.();
+      }
+    };
+
+    rec.start();
+  }
+
+  stopListening(): void {
+    if (this.recorder && this.recorder.state !== 'inactive') {
+      try {
+        this.recorder.stop();
+      } catch {
+        /* already stopped */
+      }
+    }
+  }
+
+  private releaseStream(): void {
+    this.stream?.getTracks().forEach((t) => t.stop());
+    this.stream = null;
+    this.recorder = null;
+  }
+
+  async speak(text: string, onDone?: () => void): Promise<void> {
+    if (!text) {
+      onDone?.();
+      return;
+    }
+    this.cancelSpeak();
+    try {
+      const res = await fetch(`${API_BASE}/api/voice/tts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      this.audio = audio;
+      audio.onended = () => {
+        URL.revokeObjectURL(url);
+        onDone?.();
+      };
+      audio.onerror = () => {
+        URL.revokeObjectURL(url);
+        onDone?.();
+      };
+      await audio.play();
+    } catch (err) {
+      console.warn('[ServerSpeechProvider] TTS failed, falling back to browser:', err);
+      // Graceful fallback so a reply is always spoken.
+      new BrowserSpeechProvider().speak(text, onDone);
+    }
+  }
+
+  cancelSpeak(): void {
+    if (this.audio) {
+      try {
+        this.audio.pause();
+      } catch {
+        /* noop */
+      }
+      this.audio = null;
+    }
+  }
+
+  abort(): void {
+    this.aborted = true;
+    this.stopListening();
+    this.releaseStream();
+  }
+}
 
 /**
- * Resolve the active speech provider. Today this is always the browser provider;
- * the `providers` arg (from GET /api/voice/agent/status) is reserved so a future
- * ServerSpeechProvider (Deepgram/ElevenLabs) can be selected when keys exist.
+ * Hybrid provider: routes STT and TTS independently to the server or the browser
+ * based on the backend-reported providers, with browser fallback.
  */
-export function getSpeechProvider(_providers?: { stt: string; tts: string }): SpeechProvider {
-  if (!_provider) _provider = new BrowserSpeechProvider();
+class HybridProvider implements SpeechProvider {
+  readonly name = 'hybrid';
+  private browser = new BrowserSpeechProvider();
+  private server = new ServerSpeechProvider();
+  private useServerStt: boolean;
+  private useServerTts: boolean;
+
+  constructor(providers?: { stt: string; tts: string }) {
+    this.useServerStt = providers?.stt === 'deepgram' && this.server.sttSupported;
+    this.useServerTts = providers?.tts === 'elevenlabs' && this.server.ttsSupported;
+  }
+
+  get sttSupported(): boolean {
+    return this.useServerStt ? this.server.sttSupported : this.browser.sttSupported;
+  }
+  get ttsSupported(): boolean {
+    return this.useServerTts ? this.server.ttsSupported : this.browser.ttsSupported;
+  }
+
+  startListening(handlers: ListenHandlers): void {
+    (this.useServerStt ? this.server : this.browser).startListening(handlers);
+  }
+  stopListening(): void {
+    this.server.stopListening();
+    this.browser.stopListening();
+  }
+  speak(text: string, onDone?: () => void): void {
+    (this.useServerTts ? this.server : this.browser).speak(text, onDone);
+  }
+  cancelSpeak(): void {
+    this.server.cancelSpeak();
+    this.browser.cancelSpeak();
+  }
+}
+
+let _provider: HybridProvider | null = null;
+let _signature = '';
+
+/**
+ * Resolve the active speech provider for the given backend provider report.
+ * Rebuilds when the provider mix changes (e.g. once keys are detected).
+ */
+export function getSpeechProvider(providers?: { stt: string; tts: string }): SpeechProvider {
+  const sig = `${providers?.stt || 'browser'}|${providers?.tts || 'browser'}`;
+  if (!_provider || sig !== _signature) {
+    _provider = new HybridProvider(providers);
+    _signature = sig;
+  }
   return _provider;
 }

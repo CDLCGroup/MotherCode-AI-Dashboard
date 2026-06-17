@@ -161,8 +161,10 @@ export const ttsHandler = async (req, res) => {
   try {
     const { text } = req.body || {};
     if (!text) return res.status(400).json({ error: 'Missing field: text' });
-    const { audio, contentType } = await synthesize(text);
+    const { audio, contentType, voiceId, fellBack } = await synthesize(text);
     res.set('Content-Type', contentType);
+    res.set('X-Voice-Id', voiceId || '');
+    res.set('X-Voice-Fell-Back', fellBack ? '1' : '0');
     res.send(audio);
   } catch (err) {
     res.status(err.status || 500).json({ error: err.message || 'TTS failed' });
