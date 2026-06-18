@@ -7,6 +7,7 @@ import { createDefaultAgents } from '../../agents/StubAgent.js';
 import CalendarAgent from '../../agents/CalendarAgent.js';
 import EmailAgent from '../../agents/EmailAgent.js';
 import SocialAgent from '../../agents/SocialAgent.js';
+import TikTokAgent from '../../agents/TikTokAgent.js';
 import {
   processVoiceCommand,
   getCommandHistory,
@@ -34,6 +35,10 @@ motherCode.registerAgent('email', new EmailAgent(redis));
 // Buffer" message until BUFFER_API_KEY is set. MUST register under 'social_media'
 // (the key routeIntent emits) to override the social_media stub.
 motherCode.registerAgent('social_media', new SocialAgent(redis));
+// TikTok archive: voice front door for the existing tt_scraper pipeline
+// (F:\tiktok_archiver via tt_scraper_runner.ps1). Self-degrades to a "pipeline
+// not found" message when the runner/dir aren't present on this host.
+motherCode.registerAgent('tiktok', new TikTokAgent(redis));
 
 // POST /api/voice/command  { userId, transcript, durationSec? }
 router.post('/command', (req, res) => processVoiceCommand(req, res, db, motherCode));

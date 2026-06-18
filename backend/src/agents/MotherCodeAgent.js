@@ -115,7 +115,15 @@ export class MotherCodeAgent extends BaseAgent {
       domains.push('file_manager');
     }
 
-    return [...new Set(domains)];  // Remove duplicates
+    // TikTok archive (tt_scraper pipeline) — distinct from social posting.
+    if (/archive|scrape/i.test(intent)) {
+      domains.push('tiktok');
+    }
+
+    let result = [...new Set(domains)];  // Remove duplicates
+    // An archive request should not also fire the social media poster.
+    if (result.includes('tiktok')) result = result.filter((d) => d !== 'social_media');
+    return result;
   }
 
   /**
@@ -143,6 +151,8 @@ export class MotherCodeAgent extends BaseAgent {
           return result.data?.message || "Analytics retrieved.";
         case 'file_manager':
           return result.data?.message || "File operation completed.";
+        case 'tiktok':
+          return result.data?.message || "TikTok archive started.";
         default:
           return "Done.";
       }

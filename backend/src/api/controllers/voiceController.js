@@ -2,8 +2,8 @@
 
 import { recordCall, buildCall, getCalls, getMetrics } from '../../state/voiceStore.js';
 import { broadcast } from '../../realtime/wsHub.js';
-import { ttsConfigured, synthesize } from '../../voice/tts.js';
-import { sttConfigured, transcribe } from '../../voice/stt.js';
+import { ttsConfigured, ttsFallbackConfigured, synthesizeWithFallback } from '../../voice/tts.js';
+import { sttConfigured, sttFallbackConfigured, transcribeWithFallback } from '../../voice/stt.js';
 import { googleConfigured, isAuthorized } from '../../integrations/googleAuth.js';
 import { slackConfigured, postAgentChat } from '../../integrations/slackClient.js';
 import { bufferConfigured } from '../../integrations/bufferClient.js';
@@ -169,8 +169,10 @@ export const getAgentStatus = async (req, res, motherCode) => {
     domains,
     agents,
     providers: {
-      stt: sttConfigured() ? 'deepgram' : 'browser-speech',
-      tts: ttsConfigured() ? 'elevenlabs' : 'browser-speech',
+      stt: sttConfigured() ? 'deepgram' : sttFallbackConfigured() ? 'openai' : 'browser-speech',
+      tts: ttsConfigured() ? 'elevenlabs' : ttsFallbackConfigured() ? 'openai' : 'browser-speech',
+      sttFallback: sttFallbackConfigured() ? 'openai' : null,
+      ttsFallback: ttsFallbackConfigured() ? 'openai' : null,
     },
     google: {
       configured: googleConfigured(),
@@ -189,9 +191,11 @@ export const ttsHandler = async (req, res) => {
   try {
     const { text } = req.body || {};
     if (!text) return res.status(400).json({ error: 'Missing field: text' });
-    const { audio, contentType, voiceId, fellBack } = await synthesize(text);
+    // Provider fallback: ElevenLabs → OpenAI TTS (X-Voice-Provider names the winner).
+    const { audio, contentType, voiceId, fellBack, provider } = await synthesizeWithFallback(text);
     res.set('Content-Type', contentType);
     res.set('X-Voice-Id', voiceId || '');
+    res.set('X-Voice-Provider', provider || '');
     res.set('X-Voice-Fell-Back', fellBack ? '1' : '0');
     res.send(audio);
   } catch (err) {
@@ -206,7 +210,9 @@ export const transcribeHandler = async (req, res) => {
   try {
     const audio = req.body; // express.raw() populates a Buffer
     if (!audio || !audio.length) return res.status(400).json({ error: 'Missing audio body' });
-    const result = await transcribe(audio, req.get('Content-Type') || 'audio/webm');
+    // Provider fallback: Deepgram → OpenAI Whisper (result.provider names the winner).
+    const result = await transcribeWithFallback(audio, req.get('Content-Type') || 'audio/webm');
+    res.set('X-Voice-Provider', result.provider || '');
     res.json(result);
   } catch (err) {
     res.status(err.status || 500).json({ error: err.message || 'STT failed' });
@@ -220,6 +226,8 @@ export const transcribeHandler = async (req, res) => {
 function parseIntent(transcript) {
   const lower = transcript.toLowerCase();
 
+  // TikTok archive (tt_scraper) must win over generic "post a tiktok" social routing.
+  if (/\barchive\b/.test(lower) || (/tiktok/.test(lower) && /\b(scrape|download|collect|grab|fetch)\b/.test(lower))) return 'archive_tiktok';
   if (/schedule|meeting|calendar/.test(lower)) return 'schedule_event';
   if (/read|urgent|email/.test(lower)) return 'read_emails';
   if (/post|tiktok|instagram/.test(lower)) return 'schedule_post';

@@ -17,6 +17,56 @@ export function ttsConfigured() {
   return realKey(process.env.ELEVENLABS_API_KEY) && realKey(process.env.ELEVENLABS_VOICE_ID);
 }
 
+// Secondary/backup TTS provider: OpenAI audio/speech. Activates when ElevenLabs
+// is unconfigured or fails (incl. after its own free-voice 402 fallback). Needs
+// only OPENAI_API_KEY — no Docker. (The LibreChat stack is the heavier alt.)
+const OPENAI_TTS_URL = 'https://api.openai.com/v1/audio/speech';
+
+export function ttsFallbackConfigured() {
+  return realKey(process.env.OPENAI_API_KEY);
+}
+
+/** Synthesize via OpenAI TTS. Returns { audio:Buffer, contentType, voiceId, provider:'openai', fellBack:false }. */
+export async function synthesizeOpenAI(text) {
+  if (!ttsFallbackConfigured()) {
+    throw { status: 501, message: 'OpenAI TTS fallback not configured (set OPENAI_API_KEY)' };
+  }
+  const voice = process.env.OPENAI_TTS_VOICE || 'alloy';
+  const res = await fetch(OPENAI_TTS_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ model: process.env.OPENAI_TTS_MODEL || 'tts-1', voice, input: text }),
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    throw { status: res.status, message: `OpenAI TTS error: ${detail.slice(0, 300)}` };
+  }
+  const arrayBuf = await res.arrayBuffer();
+  return { audio: Buffer.from(arrayBuf), contentType: 'audio/mpeg', voiceId: voice, provider: 'openai', fellBack: false };
+}
+
+/**
+ * Synthesize with provider fallback: ElevenLabs first, then OpenAI TTS.
+ * Returns { audio, contentType, voiceId, provider, fellBack }. Throws
+ * { status, message } only when no provider is configured or all fail.
+ */
+export async function synthesizeWithFallback(text) {
+  if (ttsConfigured()) {
+    try {
+      const r = await synthesize(text);
+      return { ...r, provider: 'elevenlabs' };
+    } catch (err) {
+      if (!ttsFallbackConfigured()) throw err;
+      console.warn(`[tts] ElevenLabs failed (${err.status || '?'}); falling back to OpenAI TTS:`, err.message);
+    }
+  }
+  if (ttsFallbackConfigured()) return synthesizeOpenAI(text);
+  throw { status: 501, message: 'No TTS provider configured (set ELEVENLABS_API_KEY or OPENAI_API_KEY)' };
+}
+
 // Voices known (this process) to require a paid plan. After the first 402 we
 // skip straight to the free fallback instead of re-paying the wasted round-trip
 // on every utterance (~440ms saved per spoken response). Cleared on restart, so
@@ -92,4 +142,10 @@ export async function synthesize(text) {
   return { audio: Buffer.from(arrayBuf), contentType: 'audio/mpeg', voiceId: usedVoice, fellBack };
 }
 
-export default { ttsConfigured, synthesize };
+export default {
+  ttsConfigured,
+  synthesize,
+  ttsFallbackConfigured,
+  synthesizeOpenAI,
+  synthesizeWithFallback,
+};
