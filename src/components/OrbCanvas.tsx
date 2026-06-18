@@ -386,8 +386,9 @@ export default function OrbCanvas({ uiState, isRunning, theme }: Props) {
 
       const W = canvas.width / (window.devicePixelRatio || 1);
       const H = canvas.height / (window.devicePixelRatio || 1);
-      ctx.fillStyle = '#050508';
-      ctx.fillRect(0, 0, W, H);
+      // Transparent clear (not an opaque fill) so the TimeBackground video shows
+      // through behind the orb; the orb graphics are drawn on top each frame.
+      ctx.clearRect(0, 0, W, H);
 
       drawRings(theme, t);
       drawTraces(theme, t, isRunning);

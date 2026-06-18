@@ -7,6 +7,7 @@
 
 import { useDashboardStore } from '../store';
 import { THEMES, getTheme, MONO } from '../theme';
+import TimeBackground from './TimeBackground';
 import OrchestrationDashboard from './OrchestrationDashboard';
 import HistoryView from './views/HistoryView';
 import ScheduleView from './views/ScheduleView';
@@ -35,13 +36,16 @@ export default function AppShell() {
         display: 'flex',
         width: '100vw',
         height: '100vh',
-        background: '#050508',
+        background: 'transparent', // TimeBackground video shows through behind the UI
         color: '#ccc',
         overflow: 'hidden',
         position: 'relative',
         fontFamily: 'Inter, system-ui, sans-serif',
       }}
     >
+      {/* TIME-OF-DAY VIDEO BACKDROP (Day 06:00–18:00 CAT, Night otherwise) */}
+      <TimeBackground />
+
       {/* GLOBAL VARIANT TABS */}
       <div style={{ position: 'absolute', top: 14, left: '50%', transform: 'translateX(-50%)', zIndex: 200, display: 'flex', gap: 6 }}>
         {Object.values(THEMES).map((th) => (
@@ -78,6 +82,8 @@ export default function AppShell() {
           alignItems: 'center',
           paddingTop: 52,
           gap: 4,
+          position: 'relative',
+          zIndex: 1,
         }}
       >
         {NAV.map((item) => {
@@ -110,7 +116,7 @@ export default function AppShell() {
       </nav>
 
       {/* ACTIVE VIEW */}
-      <main style={{ flex: 1, minWidth: 0, position: 'relative' }}>
+      <main style={{ flex: 1, minWidth: 0, position: 'relative', zIndex: 1 }}>
         {activeView === 'voice' && <OrchestrationDashboard />}
         {activeView === 'history' && <HistoryView />}
         {activeView === 'schedule' && <ScheduleView />}

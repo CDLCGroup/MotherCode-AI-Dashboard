@@ -71,7 +71,7 @@ export default function OrchestrationDashboard() {
         display: 'flex',
         width: '100%',
         height: '100%',
-        background: '#050508',
+        background: 'transparent', // let the TimeBackground video show behind the orb + glass panels
         fontFamily: 'Inter, system-ui, sans-serif',
         color: '#ccc',
         overflow: 'hidden',
