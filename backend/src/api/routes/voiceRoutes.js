@@ -6,6 +6,7 @@ import MotherCodeAgent from '../../agents/MotherCodeAgent.js';
 import { createDefaultAgents } from '../../agents/StubAgent.js';
 import CalendarAgent from '../../agents/CalendarAgent.js';
 import EmailAgent from '../../agents/EmailAgent.js';
+import SocialAgent from '../../agents/SocialAgent.js';
 import {
   processVoiceCommand,
   getCommandHistory,
@@ -29,6 +30,10 @@ const motherCode = new MotherCodeAgent(redis, createDefaultAgents(redis));
 // activates the real path the instant the user completes /auth/google.
 motherCode.registerAgent('calendar', new CalendarAgent(redis));
 motherCode.registerAgent('email', new EmailAgent(redis));
+// Social goes live the same way: Buffer-backed, self-degrades to a "connect
+// Buffer" message until BUFFER_API_KEY is set. MUST register under 'social_media'
+// (the key routeIntent emits) to override the social_media stub.
+motherCode.registerAgent('social_media', new SocialAgent(redis));
 
 // POST /api/voice/command  { userId, transcript, durationSec? }
 router.post('/command', (req, res) => processVoiceCommand(req, res, db, motherCode));

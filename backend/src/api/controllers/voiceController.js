@@ -5,6 +5,8 @@ import { broadcast } from '../../realtime/wsHub.js';
 import { ttsConfigured, synthesize } from '../../voice/tts.js';
 import { sttConfigured, transcribe } from '../../voice/stt.js';
 import { googleConfigured, isAuthorized } from '../../integrations/googleAuth.js';
+import { slackConfigured, postAgentChat } from '../../integrations/slackClient.js';
+import { bufferConfigured } from '../../integrations/bufferClient.js';
 
 /**
  * Handle voice command processing.
@@ -54,6 +56,24 @@ export const processVoiceCommand = async (req, res, db, motherCode) => {
     });
     recordCall(call);
     broadcast('voice_call', call);
+
+    // Mirror the command into Slack as a "subagent chat": one parent message per
+    // voice command, then one threaded reply per invoked agent. Reads the
+    // controller locals (intent, transcript, and payload.results) — NOT `call`,
+    // which carries none of them. Outbound-only and fire-and-forget: invoked
+    // un-awaited and .catch()'d so a Slack hiccup never fails the request path.
+    if (slackConfigured()) {
+      postAgentChat({ intent, transcript, results: payload.results })
+        .then((r) => {
+          // postMessage resolves (never throws) on a Slack API error, so surface
+          // a failed post here — most often channel_not_found (invite the bot to
+          // SLACK_CHANNEL). Logged, not thrown: the request has already returned.
+          if (r && r.success === false && !r.skipped) {
+            console.warn('[VoiceController] Slack subagent-chat not posted:', r.error);
+          }
+        })
+        .catch((err) => console.warn('[VoiceController] Slack subagent-chat skipped:', err.message));
+    }
 
     // Best-effort persistence: a logging insert must never fail the request path.
     // If Postgres isn't up (Phase 2 dev runs without it), we log and continue.
@@ -156,6 +176,9 @@ export const getAgentStatus = async (req, res, motherCode) => {
       configured: googleConfigured(),
       authorized: isAuthorized(),
     },
+    // Top-level sibling keys (parallel to `google`), not inside `providers`.
+    slack: { configured: slackConfigured() },
+    social: { configured: bufferConfigured() },
   });
 };
 

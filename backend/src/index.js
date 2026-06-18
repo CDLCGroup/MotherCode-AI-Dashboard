@@ -9,6 +9,9 @@ import voiceRoutes from './api/routes/voiceRoutes.js';
 import taskRoutes from './api/routes/taskRoutes.js';
 import integrationRoutes from './api/routes/integrationRoutes.js';
 import authRoutes from './api/routes/authRoutes.js';
+import slackRoutes from './api/routes/slackRoutes.js';
+import bufferRoutes from './api/routes/bufferRoutes.js';
+import syncRoutes from './api/routes/syncRoutes.js';
 import { errorHandler } from './api/middleware/errorHandler.js';
 import { attachWebSocket } from './realtime/wsHub.js';
 
@@ -29,6 +32,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/voice', voiceRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/integrations', integrationRoutes);
+// Social-media phase: Slack (outbound subagent-chat) + Buffer (scheduling) +
+// the Google-Sheets sync stub. All keyless-first — they no-op / return the
+// "not connected" contract shape until SLACK_BOT_TOKEN / BUFFER_API_KEY are set.
+app.use('/api/slack', slackRoutes);
+app.use('/api/buffer', bufferRoutes);
+app.use('/api/sync', syncRoutes);
 // Google OAuth consent flow (Calendar + Gmail agents). Redirect URI is served
 // here on PORT and must match GOOGLE_REDIRECT_URI / the Google Cloud Console.
 app.use('/auth/google', authRoutes);
