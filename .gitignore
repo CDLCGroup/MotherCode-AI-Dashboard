@@ -39,3 +39,6 @@ release/
 *serviceaccount*.json
 service_account.json
 credentials.json
+
+# Google OAuth user tokens (Calendar + Gmail agents) — written at /auth/google
+.google-tokens.json

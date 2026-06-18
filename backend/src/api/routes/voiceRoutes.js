@@ -4,6 +4,8 @@ import db from '../../config/database.js';
 import redis from '../../config/redis.js';
 import MotherCodeAgent from '../../agents/MotherCodeAgent.js';
 import { createDefaultAgents } from '../../agents/StubAgent.js';
+import CalendarAgent from '../../agents/CalendarAgent.js';
+import EmailAgent from '../../agents/EmailAgent.js';
 import {
   processVoiceCommand,
   getCommandHistory,
@@ -20,6 +22,13 @@ const router = Router();
 // end-to-end observable. Replace any stub by registering a real BaseAgent under
 // the same domain key (e.g. motherCode.registerAgent('calendar', new CalendarAgent(...))).
 const motherCode = new MotherCodeAgent(redis, createDefaultAgents(redis));
+
+// Go-live: replace the calendar/email stubs with real Google-backed agents.
+// They self-degrade to a "connect your Google account" message until OAuth
+// tokens exist (see googleAuth.js), so the dashboard stays live keyless and
+// activates the real path the instant the user completes /auth/google.
+motherCode.registerAgent('calendar', new CalendarAgent(redis));
+motherCode.registerAgent('email', new EmailAgent(redis));
 
 // POST /api/voice/command  { userId, transcript, durationSec? }
 router.post('/command', (req, res) => processVoiceCommand(req, res, db, motherCode));

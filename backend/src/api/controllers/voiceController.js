@@ -4,6 +4,7 @@ import { recordCall, buildCall, getCalls, getMetrics } from '../../state/voiceSt
 import { broadcast } from '../../realtime/wsHub.js';
 import { ttsConfigured, synthesize } from '../../voice/tts.js';
 import { sttConfigured, transcribe } from '../../voice/stt.js';
+import { googleConfigured, isAuthorized } from '../../integrations/googleAuth.js';
 
 /**
  * Handle voice command processing.
@@ -150,6 +151,10 @@ export const getAgentStatus = async (req, res, motherCode) => {
     providers: {
       stt: sttConfigured() ? 'deepgram' : 'browser-speech',
       tts: ttsConfigured() ? 'elevenlabs' : 'browser-speech',
+    },
+    google: {
+      configured: googleConfigured(),
+      authorized: isAuthorized(),
     },
   });
 };

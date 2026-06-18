@@ -8,6 +8,7 @@ import dotenv from 'dotenv';
 import voiceRoutes from './api/routes/voiceRoutes.js';
 import taskRoutes from './api/routes/taskRoutes.js';
 import integrationRoutes from './api/routes/integrationRoutes.js';
+import authRoutes from './api/routes/authRoutes.js';
 import { errorHandler } from './api/middleware/errorHandler.js';
 import { attachWebSocket } from './realtime/wsHub.js';
 
@@ -28,6 +29,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/voice', voiceRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/integrations', integrationRoutes);
+// Google OAuth consent flow (Calendar + Gmail agents). Redirect URI is served
+// here on PORT and must match GOOGLE_REDIRECT_URI / the Google Cloud Console.
+app.use('/auth/google', authRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
