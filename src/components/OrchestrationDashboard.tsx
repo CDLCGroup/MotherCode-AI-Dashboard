@@ -114,6 +114,8 @@ export default function OrchestrationDashboard() {
         flexWrap: 'wrap',
         minHeight: 38,
         padding: isMobile ? '6px 12px' : '0 16px',
+        // Push header content below the notch/status bar on mobile (bg stays full-bleed).
+        paddingTop: isMobile ? 'calc(env(safe-area-inset-top, 0px) + 6px)' : undefined,
         borderBottom: `1px solid ${surf.border}`,
         background: `rgba(${surf.cardRGB},${Math.min(1, surf.chromeAlpha + 0.1)})`,
         transition: 'background 240ms ease, border-color 240ms ease',

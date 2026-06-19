@@ -58,7 +58,7 @@ export default function AppShell() {
       <div
         style={{
           position: 'absolute',
-          top: isMobile ? 8 : 14,
+          top: isMobile ? 'calc(env(safe-area-inset-top, 0px) + 8px)' : 14,
           left: '50%',
           transform: 'translateX(-50%)',
           zIndex: 200,
@@ -103,6 +103,9 @@ export default function AppShell() {
                 alignItems: 'stretch',
                 justifyContent: 'space-around',
                 zIndex: 5,
+                // Clear the iOS home indicator / Android gesture bar.
+                paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+                boxSizing: 'content-box',
               }
             : {
                 width: 64,

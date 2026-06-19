@@ -11,11 +11,29 @@ html, body, #root {
   padding: 0;
 }
 
+/* Dynamic viewport height: on mobile browsers the URL bar shrinks the visible
+   area; dvh tracks it so the app fills the real screen (falls back to the 100%
+   rule above where dvh is unsupported). */
+#root {
+  height: 100dvh;
+}
+
 body {
   background-color: #04070f;
   color: #e7f1f1;
   font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   overflow-x: hidden;
+  /* Mobile polish: no grey tap flash, no iOS auto text inflation, no pull-to-
+     refresh / rubber-band bounce that would fight the in-app scroll regions. */
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  overscroll-behavior-y: none;
+}
+
+/* Thinner scrollbars on coarse-pointer (touch) devices. */
+@media (pointer: coarse) {
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
 }
 
 /* Flexbox utilities */
