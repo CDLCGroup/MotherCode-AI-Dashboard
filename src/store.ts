@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 export interface Subagent {
   id: string;
@@ -52,6 +53,13 @@ export interface DashboardState {
   // Shared UI theme (Glass-Metric variant 1/2/3) + active dashboard view
   themeVariant: number;
   activeView: string;
+  // Persisted dashboard layout prefs (collapsible rails + chips + dark mode)
+  darkMode: boolean;
+  leftRailOpen: boolean;
+  rightRailOpen: boolean;
+  bottomStripOpen: boolean;
+  cortexExpanded: boolean;
+  calendarExpanded: boolean;
   toggleSidebar: () => void;
   updateSubagentStatus: (id: string, status: Subagent['status']) => void;
   setPostsQueued: (count: number) => void;
@@ -73,9 +81,18 @@ export interface DashboardState {
   setLiveResponse: (text: string) => void;
   setThemeVariant: (variant: number) => void;
   setActiveView: (view: string) => void;
+  toggleDarkMode: () => void;
+  setDarkMode: (on: boolean) => void;
+  toggleLeftRail: () => void;
+  toggleRightRail: () => void;
+  toggleBottomStrip: () => void;
+  toggleCortex: () => void;
+  toggleCalendar: () => void;
 }
 
-export const useDashboardStore = create<DashboardState>((set) => ({
+export const useDashboardStore = create<DashboardState>()(
+  persist(
+    (set) => ({
   sidebarOpen: true,
   subagents: [
     { id: '1', name: 'TikTok Agent', status: 'active', postsProcessed: 342, tasksCompleted: 1205 },
@@ -103,6 +120,12 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   liveResponse: '',
   themeVariant: 1,
   activeView: 'voice',
+  darkMode: true,
+  leftRailOpen: true,
+  rightRailOpen: true,
+  bottomStripOpen: true,
+  cortexExpanded: true,
+  calendarExpanded: true,
   activityLog: [
     { timestamp: new Date().toISOString(), message: '✓ Dashboard initialized' },
     { timestamp: new Date(Date.now() - 60000).toISOString(), message: '✓ Buffer sync completed (12 posts)' },
@@ -165,4 +188,28 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   setThemeVariant: (variant: number) => set({ themeVariant: variant }),
 
   setActiveView: (view: string) => set({ activeView: view }),
-}));
+
+  toggleDarkMode: () => set((state) => ({ darkMode: !state.darkMode })),
+  setDarkMode: (on: boolean) => set({ darkMode: on }),
+  toggleLeftRail: () => set((state) => ({ leftRailOpen: !state.leftRailOpen })),
+  toggleRightRail: () => set((state) => ({ rightRailOpen: !state.rightRailOpen })),
+  toggleBottomStrip: () => set((state) => ({ bottomStripOpen: !state.bottomStripOpen })),
+  toggleCortex: () => set((state) => ({ cortexExpanded: !state.cortexExpanded })),
+  toggleCalendar: () => set((state) => ({ calendarExpanded: !state.calendarExpanded })),
+    }),
+    {
+      // Persist only UI-layout prefs — never the volatile voice data.
+      name: 'mothercode-ui',
+      version: 1,
+      partialize: (s) => ({
+        themeVariant: s.themeVariant,
+        darkMode: s.darkMode,
+        leftRailOpen: s.leftRailOpen,
+        rightRailOpen: s.rightRailOpen,
+        bottomStripOpen: s.bottomStripOpen,
+        cortexExpanded: s.cortexExpanded,
+        calendarExpanded: s.calendarExpanded,
+      }),
+    },
+  ),
+);

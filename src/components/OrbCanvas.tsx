@@ -1,48 +1,68 @@
 // src/components/OrbCanvas.tsx
 //
-// The Glass-Metric "orchestration core" — a canvas of orbiting agent nodes,
-// animated routing traces, particle flow, and a radial voice waveform. Ported
-// from the Glass-Metric Orchestration design. The center waveform + label are
-// the voice visualizer: STANDBY / LISTENING / RESPONDING / ERROR.
+// The Z.E.R.O. "neural constellation" core. Real agent domains are rendered as
+// region-colored brain nodes scattered around a glowing brainstem core, wired to
+// the core by faint axons with travelling synaptic pulses, over a twinkling
+// neuron starfield. The center is the live voice visualizer: STANDBY / LISTENING
+// / RESPONDING / ERROR. Adapted from the Glass-Metric orchestration core — same
+// rAF loop, resize/DPR handling and core+label+token machinery.
 
 import { useEffect, useRef } from 'react';
 import type { VoiceUiState } from '../store';
 import type { OrbTheme } from '../theme';
+import { REGIONS } from '../theme';
 
-interface AgentDef {
-  name: string;
-  icon: string;
+interface NeuralNode {
+  label: string;
+  region: string;
   x: number;
   y: number;
-  state: 'active' | 'idle';
-  route: 'A' | 'B';
+  color: string;
+  rgb: string;
+  fire: number; // decorative firing-rate label
+  active: boolean;
 }
 
 interface Particle {
-  agentIdx: number;
+  nodeIdx: number;
   t: number;
   speed: number;
   size: number;
+}
+
+interface Star {
+  x: number;
+  y: number;
+  r: number;
+  phase: number;
+  rgb: string;
 }
 
 interface Props {
   uiState: VoiceUiState;
   isRunning: boolean;
   theme: OrbTheme;
+  domains: string[];
 }
 
 const STATE_LABELS: Record<VoiceUiState, string> = {
   IDLE: 'STANDBY',
   USER_TALKING: 'LISTENING',
   AI_SPEAKING: 'RESPONDING',
-  AGENT_ERROR: 'ERROR',
+  AGENT_ERROR: 'FLAGGED',
 };
 
-export default function OrbCanvas({ uiState, isRunning, theme }: Props) {
+// Deterministic pseudo-random in [0,1) from an integer seed (no Math.random in
+// layout so node positions/fire-rates are stable across frames).
+function seed(n: number) {
+  const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+export default function OrbCanvas({ uiState, isRunning, theme, domains }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  // Latest props for the rAF loop to read without re-subscribing.
-  const propsRef = useRef<Props>({ uiState, isRunning, theme });
-  propsRef.current = { uiState, isRunning, theme };
+  const propsRef = useRef<Props>({ uiState, isRunning, theme, domains });
+  propsRef.current = { uiState, isRunning, theme, domains };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -55,30 +75,61 @@ export default function OrbCanvas({ uiState, isRunning, theme }: Props) {
     let cx = 0;
     let cy = 0;
     let orbitRadius = 0;
-    let agentDefs: AgentDef[] = [];
+    let nodes: NeuralNode[] = [];
     let particles: Particle[] = [];
+    let stars: Star[] = [];
     let processingTokens = 1240;
     let tokenAccum = 0;
+    let builtFor = ''; // domains signature the current nodes were built for
 
-    const buildAgents = () => {
+    const buildNodes = (doms: string[], running: boolean) => {
       const r = orbitRadius;
-      const PI = Math.PI;
-      agentDefs = [
-        { name: 'PARSE', icon: '⚙', x: cx + r * Math.cos(-PI * 0.25), y: cy + r * Math.sin(-PI * 0.25), state: 'active', route: 'B' },
-        { name: 'EXEC', icon: '⚡', x: cx + r * Math.cos(PI * 0.25), y: cy + r * Math.sin(PI * 0.25), state: 'active', route: 'A' },
-        { name: 'CACHE', icon: '◈', x: cx + r * Math.cos(PI * 0.75), y: cy + r * Math.sin(PI * 0.75), state: 'idle', route: 'B' },
-        { name: 'MON', icon: '◉', x: cx + r * Math.cos(-PI * 0.75), y: cy + r * Math.sin(-PI * 0.75), state: 'active', route: 'A' },
-      ];
+      const n = Math.max(doms.length, 1);
+      nodes = doms.map((d, i) => {
+        const reg = REGIONS[i % REGIONS.length];
+        // Even spokes with a deterministic organic jitter in angle + radius.
+        const baseAngle = -Math.PI / 2 + (i / n) * Math.PI * 2;
+        const angle = baseAngle + (seed(i + 1) - 0.5) * 0.5;
+        const rad = r * (0.78 + seed(i + 7) * 0.5);
+        return {
+          label: d.replace(/_/g, ' ').toUpperCase(),
+          region: reg.name,
+          x: cx + Math.cos(angle) * rad,
+          y: cy + Math.sin(angle) * rad,
+          color: reg.color,
+          rgb: reg.rgb,
+          fire: 120 + Math.floor(seed(i + 3) * 380),
+          active: running,
+        };
+      });
     };
 
     const buildParticles = () => {
       particles = [];
-      agentDefs.forEach((a, i) => {
-        const count = a.state === 'active' ? 8 : 2;
+      nodes.forEach((nd, i) => {
+        const count = nd.active ? 5 : 1;
         for (let j = 0; j < count; j++) {
-          particles.push({ agentIdx: i, t: j / count, speed: 0.00012 + Math.random() * 0.00008, size: 1.5 + Math.random() * 1.5 });
+          particles.push({ nodeIdx: i, t: j / count, speed: 0.00014 + seed(i * 10 + j) * 0.0001, size: 1.4 + seed(i + j) * 1.6 });
         }
       });
+    };
+
+    const buildStars = () => {
+      const w = cx * 2;
+      const h = cy * 2;
+      const count = Math.round((w * h) / 7000); // density
+      stars = [];
+      for (let i = 0; i < count; i++) {
+        const reg = REGIONS[i % REGIONS.length];
+        stars.push({
+          x: seed(i + 0.1) * w,
+          y: seed(i + 0.7) * h,
+          r: 0.4 + seed(i + 1.3) * 1.3,
+          phase: seed(i + 2.9) * Math.PI * 2,
+          // Most neurons are dim cyan; a few flash a region color.
+          rgb: seed(i + 4.4) > 0.86 ? reg.rgb : theme.accentRGB,
+        });
+      }
     };
 
     const resize = () => {
@@ -94,155 +145,116 @@ export default function OrbCanvas({ uiState, isRunning, theme }: Props) {
       ctx.scale(dpr, dpr);
       cx = rect.width / 2;
       cy = rect.height / 2;
-      orbitRadius = Math.min(rect.width, rect.height) * 0.32;
-      buildAgents();
+      orbitRadius = Math.min(rect.width, rect.height) * 0.34;
+      const { domains, isRunning } = propsRef.current;
+      buildNodes(domains, isRunning);
       buildParticles();
+      buildStars();
+      builtFor = domains.join(',') + '|' + isRunning;
     };
 
+    // Straight axon from node to core.
     const pathPos = (idx: number, t: number) => {
-      const a = agentDefs[idx];
-      const ax = a.x;
-      const ay = a.y;
-      if (a.route === 'B') {
-        const seg1 = Math.abs(ay - cy);
-        const seg2 = Math.abs(ax - cx);
-        const total = seg1 + seg2;
-        const dist = t * total;
-        if (dist < seg1) return { x: ax, y: ay + (cy - ay) * (dist / seg1) };
-        return { x: ax + (cx - ax) * ((dist - seg1) / seg2), y: cy };
+      const nd = nodes[idx];
+      return { x: nd.x + (cx - nd.x) * t, y: nd.y + (cy - nd.y) * t };
+    };
+
+    const drawStars = (t: number) => {
+      for (const s of stars) {
+        const tw = (Math.sin(t * 1.6 + s.phase) + 1) / 2;
+        ctx.globalAlpha = 0.12 + tw * 0.4;
+        ctx.fillStyle = `rgb(${s.rgb})`;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
       }
-      const seg1 = Math.abs(ax - cx);
-      const seg2 = Math.abs(ay - cy);
-      const total = seg1 + seg2;
-      const dist = t * total;
-      if (dist < seg1) return { x: ax + (cx - ax) * (dist / seg1), y: ay };
-      return { x: cx, y: ay + (cy - ay) * ((dist - seg1) / seg2) };
+      ctx.globalAlpha = 1;
     };
 
     const drawRings = (th: OrbTheme, t: number) => {
       const r = orbitRadius;
+      // Faint outer dashed boundary slowly rotating.
       ctx.save();
       ctx.translate(cx, cy);
-      ctx.rotate(t * 0.04);
-      ctx.strokeStyle = `rgba(${th.accentRGB},.12)`;
+      ctx.rotate(t * 0.03);
+      ctx.strokeStyle = `rgba(${th.accentRGB},.10)`;
       ctx.lineWidth = 1;
-      ctx.setLineDash([3, 9]);
+      ctx.setLineDash([2, 12]);
       ctx.beginPath();
-      ctx.arc(0, 0, r * 1.55, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      for (let i = 0; i < 48; i++) {
-        const a = (i / 48) * Math.PI * 2;
-        const major = i % 4 === 0;
-        const len = major ? 10 : 4;
-        ctx.strokeStyle = `rgba(${th.accentRGB},${major ? 0.4 : 0.12})`;
-        ctx.lineWidth = major ? 1.5 : 0.8;
-        ctx.beginPath();
-        ctx.moveTo(Math.cos(a) * (r * 1.55 - len), Math.sin(a) * (r * 1.55 - len));
-        ctx.lineTo(Math.cos(a) * r * 1.55, Math.sin(a) * r * 1.55);
-        ctx.stroke();
-      }
-      ctx.restore();
-
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(-t * 0.018);
-      ctx.strokeStyle = `rgba(${th.accentRGB},.18)`;
-      ctx.lineWidth = 1;
-      ctx.setLineDash([2, 14]);
-      ctx.beginPath();
-      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.arc(0, 0, r * 1.5, 0, Math.PI * 2);
       ctx.stroke();
       ctx.setLineDash([]);
       ctx.restore();
 
-      ctx.strokeStyle = `rgba(${th.accentRGB},.08)`;
+      // Inner field grid ring.
+      ctx.strokeStyle = `rgba(${th.accentRGB},.06)`;
       ctx.lineWidth = 1;
-      ctx.setLineDash([1, 8]);
+      ctx.setLineDash([1, 9]);
       ctx.beginPath();
-      ctx.arc(cx, cy, r * 0.5, 0, Math.PI * 2);
+      ctx.arc(cx, cy, r * 0.55, 0, Math.PI * 2);
       ctx.stroke();
       ctx.setLineDash([]);
-
-      for (let i = 0; i < 8; i++) {
-        const a = (i / 8) * Math.PI * 2;
-        ctx.strokeStyle = `rgba(${th.accentRGB},.04)`;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        ctx.lineTo(cx + Math.cos(a) * r * 1.55, cy + Math.sin(a) * r * 1.55);
-        ctx.stroke();
-      }
-
-      // Radar sweep
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(t * 0.9);
-      ctx.strokeStyle = `rgba(${th.accentRGB},.5)`;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(r * 1.45, 0);
-      ctx.stroke();
-      ctx.fillStyle = `rgba(${th.accentRGB},.04)`;
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.arc(0, 0, r * 1.45, -0.5, 0, false);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
     };
 
-    const tracePath = (a: AgentDef) => {
-      ctx.beginPath();
-      ctx.moveTo(a.x, a.y);
-      if (a.route === 'B') {
-        ctx.lineTo(a.x, cy + (a.y > cy ? -6 : 6));
-        ctx.arcTo(a.x, cy, a.x + (cx > a.x ? 6 : -6), cy, 6);
-        ctx.lineTo(cx, cy);
-      } else {
-        ctx.lineTo(cx + (a.x > cx ? 6 : -6), a.y);
-        ctx.arcTo(cx, a.y, cx, a.y + (cy > a.y ? 6 : -6), 6);
-        ctx.lineTo(cx, cy);
+    const drawAxons = (th: OrbTheme, t: number, running: boolean) => {
+      // Inter-node web (synaptic mesh) — very faint.
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const a = nodes[i];
+          const b = nodes[j];
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          if (Math.hypot(dx, dy) > orbitRadius * 1.15) continue;
+          ctx.strokeStyle = `rgba(${th.accentRGB},.05)`;
+          ctx.lineWidth = 0.7;
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+        }
       }
-      ctx.stroke();
-    };
-
-    const drawTraces = (th: OrbTheme, t: number, running: boolean) => {
-      for (let i = 0; i < agentDefs.length; i++) {
-        const a = agentDefs[i];
-        const active = a.state === 'active' && running;
-        ctx.strokeStyle = `rgba(${th.accentRGB},${active ? 0.35 : 0.1})`;
+      // Axon from each node to the core, tinted by region.
+      for (let i = 0; i < nodes.length; i++) {
+        const nd = nodes[i];
+        const active = nd.active && running;
+        ctx.strokeStyle = `rgba(${nd.rgb},${active ? 0.28 : 0.1})`;
         ctx.lineWidth = 1;
         ctx.setLineDash([]);
-        tracePath(a);
+        ctx.beginPath();
+        ctx.moveTo(nd.x, nd.y);
+        ctx.lineTo(cx, cy);
+        ctx.stroke();
         if (active) {
-          ctx.strokeStyle = `rgba(${th.glowRGB},.45)`;
-          ctx.lineWidth = 1.5;
-          ctx.setLineDash([5, 10]);
-          ctx.lineDashOffset = -(t * 28 + i * 7);
-          tracePath(a);
+          ctx.strokeStyle = `rgba(${nd.rgb},.5)`;
+          ctx.lineWidth = 1.2;
+          ctx.setLineDash([4, 12]);
+          ctx.lineDashOffset = -(t * 26 + i * 6);
+          ctx.beginPath();
+          ctx.moveTo(nd.x, nd.y);
+          ctx.lineTo(cx, cy);
+          ctx.stroke();
           ctx.setLineDash([]);
         }
       }
     };
 
-    const drawParticles = (th: OrbTheme, dt: number, running: boolean) => {
+    const drawParticles = (dt: number, running: boolean) => {
       if (!running) return;
       for (const p of particles) {
+        const nd = nodes[p.nodeIdx];
+        if (!nd) continue;
         p.t += p.speed * (dt || 16);
         if (p.t >= 1) p.t -= 1;
-        const agent = agentDefs[p.agentIdx];
-        if (agent.state !== 'active') {
+        if (!nd.active) {
           p.t += 0.003;
           continue;
         }
-        const pos = pathPos(p.agentIdx, p.t);
+        const pos = pathPos(p.nodeIdx, p.t);
         const alpha = Math.sin(p.t * Math.PI) * 0.9;
         ctx.save();
         ctx.globalAlpha = alpha;
         const grad = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, p.size * 4);
-        grad.addColorStop(0, th.accent);
+        grad.addColorStop(0, nd.color);
         grad.addColorStop(1, 'transparent');
         ctx.fillStyle = grad;
         ctx.beginPath();
@@ -256,58 +268,66 @@ export default function OrbCanvas({ uiState, isRunning, theme }: Props) {
       }
     };
 
-    const drawNodes = (th: OrbTheme, t: number, running: boolean) => {
-      for (const a of agentDefs) {
-        const active = a.state === 'active' && running;
-        const pulse = (Math.sin(t * 1.8 + a.x * 0.01) + 1) / 2;
-        const R = 30;
+    const drawNodes = (t: number, running: boolean) => {
+      for (const nd of nodes) {
+        const active = nd.active && running;
+        const pulse = (Math.sin(t * 1.8 + nd.x * 0.01) + 1) / 2;
+        const R = 24;
         if (active) {
           ctx.save();
-          ctx.globalAlpha = 0.1 + pulse * 0.12;
-          const halo = ctx.createRadialGradient(a.x, a.y, R, a.x, a.y, R + 20);
-          halo.addColorStop(0, th.accent);
+          ctx.globalAlpha = 0.1 + pulse * 0.14;
+          const halo = ctx.createRadialGradient(nd.x, nd.y, R, nd.x, nd.y, R + 22);
+          halo.addColorStop(0, nd.color);
           halo.addColorStop(1, 'transparent');
           ctx.fillStyle = halo;
           ctx.beginPath();
-          ctx.arc(a.x, a.y, R + 20, 0, Math.PI * 2);
+          ctx.arc(nd.x, nd.y, R + 22, 0, Math.PI * 2);
           ctx.fill();
           ctx.restore();
         }
-        const bg = ctx.createRadialGradient(a.x - R * 0.3, a.y - R * 0.3, 0, a.x, a.y, R);
-        bg.addColorStop(0, active ? `rgba(${th.accentRGB},.25)` : 'rgba(30,30,50,.8)');
-        bg.addColorStop(1, 'rgba(8,8,16,.95)');
+        const bg = ctx.createRadialGradient(nd.x - R * 0.3, nd.y - R * 0.3, 0, nd.x, nd.y, R);
+        bg.addColorStop(0, active ? `rgba(${nd.rgb},.22)` : 'rgba(18,28,38,.85)');
+        bg.addColorStop(1, 'rgba(4,7,15,.95)');
         ctx.save();
         if (active) {
-          ctx.shadowBlur = 18;
-          ctx.shadowColor = th.accent;
+          ctx.shadowBlur = 16;
+          ctx.shadowColor = nd.color;
         }
         ctx.fillStyle = bg;
         ctx.beginPath();
-        ctx.arc(a.x, a.y, R, 0, Math.PI * 2);
+        ctx.arc(nd.x, nd.y, R, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = active ? th.accent : '#2a2a3a';
-        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = active ? nd.color : '#1d3540';
+        ctx.lineWidth = 1.4;
         ctx.beginPath();
-        ctx.arc(a.x, a.y, R, 0, Math.PI * 2);
+        ctx.arc(nd.x, nd.y, R, 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
 
-        ctx.fillStyle = active ? th.accent : '#555';
-        ctx.font = `bold 16px 'Fira Code', monospace`;
+        // Region core dot.
+        ctx.fillStyle = active ? nd.color : '#33505c';
+        ctx.beginPath();
+        ctx.arc(nd.x, nd.y - 3, 3.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Label: domain name + decorative firing rate.
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(a.icon, a.x, a.y - 5);
-        ctx.fillStyle = active ? '#aaa' : '#444';
-        ctx.font = `bold 9px 'Fira Code', monospace`;
-        ctx.fillText(a.name, a.x, a.y + 10);
+        ctx.fillStyle = active ? '#d8efef' : '#5a7681';
+        ctx.font = `600 8.5px 'JetBrains Mono', monospace`;
+        ctx.fillText(nd.label, nd.x, nd.y + 9);
+        ctx.fillStyle = active ? `rgba(${nd.rgb},.8)` : '#3a5862';
+        ctx.font = `7px 'JetBrains Mono', monospace`;
+        ctx.fillText(`ƒ ${nd.fire}/s`, nd.x, nd.y + 19);
       }
     };
 
     const drawCore = (th: OrbTheme, t: number, running: boolean, uiState: VoiceUiState) => {
-      const iR = 52;
-      const maxH = running ? 48 : 12;
+      const iR = 50;
+      const maxH = running ? 46 : 11;
       const numBars = 72;
       const speed = uiState === 'AI_SPEAKING' ? 1.4 : uiState === 'USER_TALKING' ? 1.1 : 0.8;
+      const err = uiState === 'AGENT_ERROR';
       for (let i = 0; i < numBars; i++) {
         const angle = (i / numBars) * Math.PI * 2 - Math.PI / 2;
         const bh = Math.max(
@@ -324,86 +344,112 @@ export default function OrbCanvas({ uiState, isRunning, theme }: Props) {
         ctx.rotate(angle);
         const g = ctx.createLinearGradient(0, -iR - bh, 0, -iR);
         g.addColorStop(0, `rgba(${th.glowRGB},0)`);
-        g.addColorStop(0.4, `rgba(${th.accentRGB},.5)`);
-        g.addColorStop(1, th.accent);
+        g.addColorStop(0.4, `rgba(${err ? '255,35,53' : th.accentRGB},.5)`);
+        g.addColorStop(1, err ? '#ff2335' : th.accent);
         ctx.fillStyle = g;
         ctx.fillRect(-1.2, -iR - bh, 2.4, bh);
         ctx.restore();
       }
 
-      const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, iR + 14);
-      cg.addColorStop(0, `rgba(${th.accentRGB},.35)`);
+      const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, iR + 16);
+      cg.addColorStop(0, `rgba(${th.accentRGB},.4)`);
       cg.addColorStop(0.6, `rgba(${th.accentRGB},.08)`);
       cg.addColorStop(1, 'transparent');
       ctx.fillStyle = cg;
       ctx.beginPath();
-      ctx.arc(cx, cy, iR + 14, 0, Math.PI * 2);
+      ctx.arc(cx, cy, iR + 16, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.save();
-      ctx.shadowBlur = 28;
-      ctx.shadowColor = uiState === 'AGENT_ERROR' ? '#ef4444' : th.accent;
-      ctx.fillStyle = '#070710';
+      ctx.shadowBlur = 30;
+      ctx.shadowColor = err ? '#ff2335' : th.accent;
+      ctx.fillStyle = '#04070f';
       ctx.beginPath();
       ctx.arc(cx, cy, iR - 1, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = uiState === 'AGENT_ERROR' ? 'rgba(239,68,68,.8)' : `rgba(${th.accentRGB},.75)`;
+      ctx.strokeStyle = err ? 'rgba(255,35,53,.85)' : `rgba(${th.accentRGB},.8)`;
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.arc(cx, cy, iR - 1, 0, Math.PI * 2);
       ctx.stroke();
       ctx.restore();
 
+      // Bright synapse core.
+      const core = ctx.createRadialGradient(cx, cy - 2, 0, cx, cy - 2, 16);
+      core.addColorStop(0, '#ffffff');
+      core.addColorStop(0.4, err ? '#ff6675' : th.accent);
+      core.addColorStop(1, 'transparent');
+      ctx.fillStyle = core;
+      ctx.beginPath();
+      ctx.arc(cx, cy - 2, 16, 0, Math.PI * 2);
+      ctx.fill();
+
       const label = running ? STATE_LABELS[uiState] : 'STANDBY';
-      const stateColor = uiState === 'AGENT_ERROR' ? '#ef4444' : th.accent;
+      const stateColor = err ? '#ff2335' : th.accent;
       ctx.fillStyle = stateColor;
-      ctx.font = `bold 9px 'Fira Code', monospace`;
+      ctx.font = `700 9px 'JetBrains Mono', monospace`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(label, cx, cy - 12);
-      ctx.fillStyle = '#ccc';
-      ctx.font = `bold 14px 'Fira Code', monospace`;
-      ctx.fillText(Math.floor(processingTokens).toLocaleString(), cx, cy + 4);
-      ctx.fillStyle = `rgba(${th.accentRGB},.4)`;
-      ctx.font = `8px 'Fira Code', monospace`;
-      ctx.fillText('TOKENS', cx, cy + 17);
+      ctx.fillText(label, cx, cy + 14);
+      ctx.fillStyle = '#cfe7e7';
+      ctx.font = `700 13px 'JetBrains Mono', monospace`;
+      ctx.fillText(Math.floor(processingTokens).toLocaleString(), cx, cy + 28);
+      ctx.fillStyle = `rgba(${th.accentRGB},.45)`;
+      ctx.font = `7px 'JetBrains Mono', monospace`;
+      ctx.fillText('SYNAPSES', cx, cy + 39);
     };
 
     const loop = (ts: number) => {
       frameId = requestAnimationFrame(loop);
       const dt = ts - (lastTime || ts);
       lastTime = ts;
-      const { uiState, isRunning, theme } = propsRef.current;
+      const { uiState, isRunning, theme, domains } = propsRef.current;
       const t = Date.now() / 1000;
+
+      // Rebuild nodes when the domain set or running flag changes.
+      const sig = domains.join(',') + '|' + isRunning;
+      if (sig !== builtFor && orbitRadius > 0) {
+        buildNodes(domains, isRunning);
+        buildParticles();
+        builtFor = sig;
+      }
 
       if (isRunning) {
         tokenAccum += dt;
         if (tokenAccum > 700) {
-          processingTokens += Math.random() * 40;
+          processingTokens += seed(Math.floor(ts)) * 40;
           tokenAccum = 0;
         }
       }
 
       const W = canvas.width / (window.devicePixelRatio || 1);
       const H = canvas.height / (window.devicePixelRatio || 1);
-      // Transparent clear (not an opaque fill) so the TimeBackground video shows
-      // through behind the orb; the orb graphics are drawn on top each frame.
       ctx.clearRect(0, 0, W, H);
 
+      drawStars(t);
       drawRings(theme, t);
-      drawTraces(theme, t, isRunning);
-      drawParticles(theme, dt, isRunning);
-      drawNodes(theme, t, isRunning);
+      drawAxons(theme, t, isRunning);
+      drawParticles(dt, isRunning);
+      drawNodes(t, isRunning);
       drawCore(theme, t, isRunning, uiState);
     };
 
     resize();
     window.addEventListener('resize', resize);
+    // Re-center when the parent box changes size without a window resize
+    // (mobile stack / rail collapse / orientation) — otherwise cx/cy/orbitRadius
+    // go stale and the constellation renders off-centre or stretched.
+    let ro: ResizeObserver | null = null;
+    if (canvas.parentElement && typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => resize());
+      ro.observe(canvas.parentElement);
+    }
     frameId = requestAnimationFrame(loop);
 
     return () => {
       cancelAnimationFrame(frameId);
       window.removeEventListener('resize', resize);
+      ro?.disconnect();
     };
   }, []);
 
