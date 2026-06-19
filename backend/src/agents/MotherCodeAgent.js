@@ -27,8 +27,13 @@ export class MotherCodeAgent extends BaseAgent {
     // command = { intent, params, userId, transcript }
 
     try {
-      // Determine which agent(s) to invoke
-      const targetAgents = this.routeIntent(command.intent);
+      // Determine which agent(s) to invoke. The LLM router (when configured)
+      // supplies command.domains directly; otherwise fall back to the regex
+      // router over the parsed intent label. Pre-supplied domains are still
+      // filtered to registered agents so a stale/unknown domain can't break us.
+      const targetAgents = Array.isArray(command.domains)
+        ? [...new Set(command.domains)].filter((d) => this.agents[d])
+        : this.routeIntent(command.intent);
 
       if (targetAgents.length === 0) {
         return {

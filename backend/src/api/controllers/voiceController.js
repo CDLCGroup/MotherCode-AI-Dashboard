@@ -4,6 +4,7 @@ import { recordCall, buildCall, getCalls, getMetrics } from '../../state/voiceSt
 import { broadcast } from '../../realtime/wsHub.js';
 import { ttsConfigured, ttsFallbackConfigured, synthesizeWithFallback } from '../../voice/tts.js';
 import { sttConfigured, sttFallbackConfigured, transcribeWithFallback } from '../../voice/stt.js';
+import { llmConfigured, classifyIntent, MODEL as ROUTER_MODEL } from '../../voice/intentRouter.js';
 import { googleConfigured, isAuthorized } from '../../integrations/googleAuth.js';
 import { slackConfigured, postAgentChat } from '../../integrations/slackClient.js';
 import { bufferConfigured } from '../../integrations/bufferClient.js';
@@ -24,14 +25,30 @@ export const processVoiceCommand = async (req, res, db, motherCode) => {
 
     console.log(`[VoiceController] Processing command from user ${userId}:`, transcript);
 
-    // Parse intent from transcript (could use Claude API for better accuracy)
-    const intent = parseIntent(transcript);
+    // Determine intent + target domains. Preferred path: the LLM router
+    // (claude-opus-4-8) classifies the transcript directly. Keyless fallback:
+    // the regex parseIntent + MotherCodeAgent.routeIntent. The LLM call never
+    // breaks the request — any failure logs and drops to the regex path.
+    let intent;
+    let domains; // undefined → MotherCodeAgent falls back to routeIntent(intent)
+    if (llmConfigured()) {
+      try {
+        const routed = await classifyIntent(transcript);
+        intent = routed.intent;
+        domains = routed.domains;
+        console.log(`[VoiceController] LLM router → intent=${intent} domains=[${domains.join(',')}]`);
+      } catch (err) {
+        console.warn('[VoiceController] LLM router failed, using regex fallback:', err.message);
+      }
+    }
+    if (intent === undefined) intent = parseIntent(transcript);
 
     // Route to MotherCode for orchestration
     const command = {
       userId,
       transcript,
       intent,
+      domains,
       timestamp: new Date().toISOString()
     };
 
@@ -181,6 +198,8 @@ export const getAgentStatus = async (req, res, motherCode) => {
     // Top-level sibling keys (parallel to `google`), not inside `providers`.
     slack: { configured: slackConfigured() },
     social: { configured: bufferConfigured() },
+    // Intent router: claude-opus-4-8 when keyed, else the keyless regex router.
+    router: { configured: llmConfigured(), engine: llmConfigured() ? 'llm' : 'regex', model: ROUTER_MODEL },
   });
 };
 
