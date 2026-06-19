@@ -45,3 +45,12 @@ credentials.json
 
 # MCP config holds the live Obsidian Local REST API key — keep .mcp.json.example as the tracked template
 .mcp.json
+
+# Large binaries / vendored installers — these were accidentally committed in 78ba82a
+# (later removed via filter-branch). Keep them out of git for good.
+EMPLOYEES/
+outputs/
+AI Design Agent/
+*.exe
+*.msi
+*.zip
