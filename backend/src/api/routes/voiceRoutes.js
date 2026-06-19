@@ -8,6 +8,9 @@ import CalendarAgent from '../../agents/CalendarAgent.js';
 import EmailAgent from '../../agents/EmailAgent.js';
 import SocialAgent from '../../agents/SocialAgent.js';
 import TikTokAgent from '../../agents/TikTokAgent.js';
+import AnalyticsAgent from '../../agents/AnalyticsAgent.js';
+import FinanceAgent from '../../agents/FinanceAgent.js';
+import FileManagerAgent from '../../agents/FileManagerAgent.js';
 import {
   processVoiceCommand,
   getCommandHistory,
@@ -39,6 +42,15 @@ motherCode.registerAgent('social_media', new SocialAgent(redis));
 // (F:\tiktok_archiver via tt_scraper_runner.ps1). Self-degrades to a "pipeline
 // not found" message when the runner/dir aren't present on this host.
 motherCode.registerAgent('tiktok', new TikTokAgent(redis));
+// Promote the remaining stubs to real agents:
+// - analytics: REAL keyless usage stats from the in-memory voice store.
+// - finance: Paystack-backed; self-degrades to "connect Paystack" until
+//   PAYSTACK_SECRET_KEY is set (never fabricates revenue numbers).
+// - file_manager: REAL sandboxed local notes (list/read/create+append text only;
+//   no deletes, no traversal — MOTHERCODE_FILES_DIR, default <repo>/outputs/notes).
+motherCode.registerAgent('analytics', new AnalyticsAgent(redis));
+motherCode.registerAgent('finance', new FinanceAgent(redis));
+motherCode.registerAgent('file_manager', new FileManagerAgent(redis));
 
 // POST /api/voice/command  { userId, transcript, durationSec? }
 router.post('/command', (req, res) => processVoiceCommand(req, res, db, motherCode));

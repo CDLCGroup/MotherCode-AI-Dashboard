@@ -5,6 +5,7 @@ import { broadcast } from '../../realtime/wsHub.js';
 import { ttsConfigured, ttsFallbackConfigured, synthesizeWithFallback } from '../../voice/tts.js';
 import { sttConfigured, sttFallbackConfigured, transcribeWithFallback } from '../../voice/stt.js';
 import { llmConfigured, classifyIntent, MODEL as ROUTER_MODEL } from '../../voice/intentRouter.js';
+import { realKey } from '../../voice/keys.js';
 import { googleConfigured, isAuthorized } from '../../integrations/googleAuth.js';
 import { slackConfigured, postAgentChat } from '../../integrations/slackClient.js';
 import { bufferConfigured } from '../../integrations/bufferClient.js';
@@ -198,6 +199,8 @@ export const getAgentStatus = async (req, res, motherCode) => {
     // Top-level sibling keys (parallel to `google`), not inside `providers`.
     slack: { configured: slackConfigured() },
     social: { configured: bufferConfigured() },
+    // Paystack-backed finance agent.
+    finance: { configured: realKey(process.env.PAYSTACK_SECRET_KEY), provider: 'paystack' },
     // Intent router: claude-opus-4-8 when keyed, else the keyless regex router.
     router: { configured: llmConfigured(), engine: llmConfigured() ? 'llm' : 'regex', model: ROUTER_MODEL },
   });
@@ -248,9 +251,11 @@ function parseIntent(transcript) {
   // TikTok archive (tt_scraper) must win over generic "post a tiktok" social routing.
   if (/\barchive\b/.test(lower) || (/tiktok/.test(lower) && /\b(scrape|download|collect|grab|fetch)\b/.test(lower))) return 'archive_tiktok';
   if (/schedule|meeting|calendar/.test(lower)) return 'schedule_event';
+  // File/note ops win over the email "read" keyword (e.g. "read the note …").
+  if (/\b(files?|notes?|documents?|folder|memo|reminder)\b/.test(lower)) return 'manage_file';
   if (/read|urgent|email/.test(lower)) return 'read_emails';
   if (/post|tiktok|instagram/.test(lower)) return 'schedule_post';
-  if (/earn|revenue|stripe/.test(lower)) return 'get_revenue';
+  if (/earn|revenue|stripe|paystack|sales|payout|balance|payment/.test(lower)) return 'get_revenue';
   if (/trending|hashtag/.test(lower)) return 'check_trends';
   if (/analytics|metrics|engagement|performance|insight|\bviews\b|\blikes\b/.test(lower)) return 'get_analytics';
   if (/file|edit|save/.test(lower)) return 'manage_file';
