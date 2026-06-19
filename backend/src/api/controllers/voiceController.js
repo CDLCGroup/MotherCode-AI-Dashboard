@@ -233,6 +233,7 @@ function parseIntent(transcript) {
   if (/post|tiktok|instagram/.test(lower)) return 'schedule_post';
   if (/earn|revenue|stripe/.test(lower)) return 'get_revenue';
   if (/trending|hashtag/.test(lower)) return 'check_trends';
+  if (/analytics|metrics|engagement|performance|insight|\bviews\b|\blikes\b/.test(lower)) return 'get_analytics';
   if (/file|edit|save/.test(lower)) return 'manage_file';
 
   return 'unknown';
