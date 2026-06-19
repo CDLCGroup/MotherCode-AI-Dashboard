@@ -15,6 +15,11 @@ interface AgentStatus {
   agentCount: number;
   domains: string[];
   providers: { stt: string; tts: string };
+  router?: { configured: boolean; engine: string; model: string };
+  google?: { configured: boolean; authorized: boolean };
+  slack?: { configured: boolean };
+  social?: { configured: boolean };
+  finance?: { configured: boolean; provider: string };
 }
 
 interface Integration {
@@ -59,7 +64,58 @@ export default function SettingsView() {
             </span>
           ))}
         </div>
-        <Note>All agents are currently <b>stubs</b>. Replace each with a real BaseAgent under the same domain key.</Note>
+        <Row
+          theme={theme}
+          label="Intent router"
+          ok={!!status?.router?.configured}
+          value={status?.router ? (status.router.engine === 'llm' ? status.router.model : 'regex (keyless)') : '—'}
+          accentValue={status?.router?.engine === 'llm'}
+        />
+        {status?.router?.engine !== 'llm' && (
+          <Note>
+            Routing uses the keyless regex router. Set <code style={codeStyle}>ANTHROPIC_API_KEY</code> (or{' '}
+            <code style={codeStyle}>CLAUDE_API_KEY</code>) in <code style={codeStyle}>backend/.env</code> to route with{' '}
+            <code style={codeStyle}>{status?.router?.model || 'claude-opus-4-8'}</code>.
+          </Note>
+        )}
+      </Section>
+
+      <Section theme={theme} title="CONNECTIONS">
+        <Row
+          theme={theme}
+          label="Google (Calendar + Gmail)"
+          ok={!!status?.google?.authorized}
+          value={!status?.google?.configured ? 'no keys' : status?.google?.authorized ? 'authorized' : 'needs sign-in'}
+        />
+        {status?.google?.configured && !status?.google?.authorized && (
+          <Note>
+            OAuth keys present, account not linked. Visit{' '}
+            <a href={`${API_BASE}/auth/google`} target="_blank" rel="noreferrer" style={{ ...codeStyle, color: theme.accent }}>
+              {API_BASE}/auth/google
+            </a>{' '}
+            to authorize Calendar + Gmail.
+          </Note>
+        )}
+        {!status?.google?.configured && (
+          <Note>
+            Set <code style={codeStyle}>GOOGLE_CLIENT_ID</code> / <code style={codeStyle}>GOOGLE_CLIENT_SECRET</code> in{' '}
+            <code style={codeStyle}>backend/.env</code> (see <code style={codeStyle}>SETUP-google.md</code>).
+          </Note>
+        )}
+        <Row theme={theme} label="Slack (subagent chat)" ok={!!status?.slack?.configured} value={status?.slack?.configured ? 'connected' : 'no token'} />
+        <Row theme={theme} label="Buffer (social posting)" ok={!!status?.social?.configured} value={status?.social?.configured ? 'connected' : 'no token'} />
+        <Row
+          theme={theme}
+          label={`Finance (${status?.finance?.provider || 'paystack'})`}
+          ok={!!status?.finance?.configured}
+          value={status?.finance?.configured ? 'connected' : 'no key'}
+        />
+        {!status?.finance?.configured && (
+          <Note>
+            Set <code style={codeStyle}>PAYSTACK_SECRET_KEY</code> in <code style={codeStyle}>backend/.env</code> to report
+            real balance + revenue. Until then the finance agent says "connect Paystack" and never invents numbers.
+          </Note>
+        )}
       </Section>
 
       <Section theme={theme} title="VOICE PROVIDERS">
