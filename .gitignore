@@ -54,3 +54,5 @@ AI Design Agent/
 *.exe
 *.msi
 *.zip
+# Extracted design-asset bundle (large .mp4) — the source .zip is already ignored above
+Z.E.R.O. Neural Voice Interface/
