@@ -75,8 +75,12 @@ file to edit to add/replace an agent — NOT `index.js` (which only mounts route
 - All agents extend `BaseAgent` (`backend/src/agents/BaseAgent.js`): implement `execute(command)`;
   the base wraps it with timing, `command_executed`/`command_failed` events, and the
   `{ success, data, error }` envelope. `command = { intent, params, userId, transcript }`.
-- Registered domains today: **real** — `calendar`, `email` (Google OAuth), `social_media` (Buffer),
-  `tiktok`; **stubs** — `finance`, `analytics`, `file_manager` (one `StubAgent` per domain).
+- All seven domains are **real agents** now (no stubs): `calendar`, `email` (Google OAuth),
+  `social_media` (Buffer), `tiktok` (tt_scraper), `finance` (Paystack), `analytics` (real keyless
+  usage stats from the voice store), `file_manager` (sandboxed local notes). Each self-degrades
+  keyless: finance/Google/Buffer return a "connect X" message until their key/auth exists.
+  `StubAgent`/`createDefaultAgents` still boot the set in voiceRoutes, then real agents are
+  registered over them — keep that override order.
 - New agent domains **auto-surface** as cards on the frontend via `/api/voice/agent/status` — no
   frontend change needed to expose a new agent.
 
