@@ -42,3 +42,6 @@ credentials.json
 
 # Google OAuth user tokens (Calendar + Gmail agents) — written at /auth/google
 .google-tokens.json
+
+# MCP config holds the live Obsidian Local REST API key — keep .mcp.json.example as the tracked template
+.mcp.json
