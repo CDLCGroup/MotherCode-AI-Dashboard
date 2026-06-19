@@ -66,10 +66,12 @@ Frontend talks to the backend at `VITE_API_URL` / `VITE_WS_URL` (default `http:/
 `MotherCodeAgent` and calls `registerAgent(domain, agent)` for each specialized agent. This is the
 file to edit to add/replace an agent — NOT `index.js` (which only mounts routes).
 
-- `MotherCodeAgent.routeIntent()` (`backend/src/agents/MotherCodeAgent.js`) is a **regex keyword
-  router** over the transcript that returns a list of domains, then runs those agents in parallel via
-  `Promise.all` and aggregates their replies. Replacing this regex with `claude-opus-4-8` structured
-  output (keyless-fallback to the regex) is the planned next phase — see `STATUS.md`.
+- Routing is two-tier. Preferred: the **LLM router** (`backend/src/voice/intentRouter.js`,
+  `claude-opus-4-8` via a forced `route_command` tool call) classifies the transcript into an intent +
+  agent domains; the controller passes `command.domains` straight through. Keyless fallback: when
+  `ANTHROPIC_API_KEY`/`CLAUDE_API_KEY` is unset or the API errors, it drops to the **regex router**
+  `MotherCodeAgent.routeIntent()`. `execute()` runs the chosen agents in parallel via `Promise.all`
+  and aggregates replies. `routeIntent` and its 9/9 selftest are the keyless path — keep them.
 - All agents extend `BaseAgent` (`backend/src/agents/BaseAgent.js`): implement `execute(command)`;
   the base wraps it with timing, `command_executed`/`command_failed` events, and the
   `{ success, data, error }` envelope. `command = { intent, params, userId, transcript }`.
